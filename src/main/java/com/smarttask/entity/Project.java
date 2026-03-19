@@ -1,6 +1,7 @@
 package com.smarttask.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.smarttask.enums.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -28,7 +29,8 @@ public class Project {
     private String name;
 
     private String description;
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private ProjectStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workspace_id", nullable = false)

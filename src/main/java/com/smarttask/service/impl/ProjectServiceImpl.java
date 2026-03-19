@@ -4,6 +4,7 @@ import com.smarttask.dto.request.ProjectRequest;
 import com.smarttask.dto.response.ProjectResponse;
 import com.smarttask.entity.Project;
 import com.smarttask.entity.Workspace;
+import com.smarttask.enums.ProjectStatus;
 import com.smarttask.exception.ResourceNotFoundException;
 import com.smarttask.repository.ProjectRepository;
 import com.smarttask.repository.WorkspaceRepository;
@@ -32,7 +33,7 @@ public class ProjectServiceImpl implements ProjectService {
             .name(request.getName())
             .description(request.getDescription())
             .workspace(workspace)
-            .status("ACTIVE")
+            .status(ProjectStatus.ACTIVE)
             .build();
         return toResponse(projectRepository.save(project));
     }

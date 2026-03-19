@@ -95,6 +95,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         }
         User member = userRepository.findById(memberId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (workspace.getMembers().contains(member)) {
+            return; // already a member — idempotent
+        }
         workspace.getMembers().add(member);
         workspaceRepository.save(workspace);
     }
@@ -109,6 +112,9 @@ public class WorkspaceServiceImpl implements WorkspaceService {
         }
         User member = userRepository.findById(memberId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (!workspace.getMembers().contains(member)) {
+            throw new ResourceNotFoundException("User is not a member of this workspace");
+        }
         workspace.getMembers().remove(member);
         workspaceRepository.save(workspace);
     }

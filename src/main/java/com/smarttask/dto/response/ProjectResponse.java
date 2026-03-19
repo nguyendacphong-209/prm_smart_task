@@ -1,5 +1,6 @@
 package com.smarttask.dto.response;
 
+import com.smarttask.enums.ProjectStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,7 @@ public class ProjectResponse {
     private UUID id;
     private String name;
     private String description;
-    private String status;
+    private ProjectStatus status;
     private UUID workspaceId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

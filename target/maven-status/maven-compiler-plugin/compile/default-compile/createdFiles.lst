@@ -53,6 +53,7 @@ com/smarttask/controller/TaskController.class
 com/smarttask/service/impl/ProjectServiceImpl.class
 com/smarttask/dto/response/CommentResponse$CommentResponseBuilder.class
 com/smarttask/service/CommentService.class
+com/smarttask/enums/ProjectStatus.class
 com/smarttask/entity/Notification$NotificationBuilder.class
 com/smarttask/repository/ProjectRepository.class
 com/smarttask/service/TaskService.class

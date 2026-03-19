@@ -121,14 +121,18 @@ public class TaskServiceImpl implements TaskService {
             .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
         User assignee = userRepository.findById(assigneeId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        // Only notify if the assignee is actually changing
+        boolean assigneeChanged = task.getAssignee() == null || !task.getAssignee().getId().equals(assigneeId);
         task.setAssignee(assignee);
         taskRepository.save(task);
-        notificationService.createNotification(
-            NotificationType.TASK_ASSIGNED,
-            "You have been assigned to task: " + task.getTitle(),
-            assignee.getId(),
-            task.getId()
-        );
+        if (assigneeChanged) {
+            notificationService.createNotification(
+                NotificationType.TASK_ASSIGNED,
+                "You have been assigned to task: " + task.getTitle(),
+                assignee.getId(),
+                task.getId()
+            );
+        }
     }
 
     @Override
