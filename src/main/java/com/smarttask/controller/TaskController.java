@@ -46,6 +46,11 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getTask(id));
     }
 
+    @GetMapping("/assignee/{assigneeId}")
+    public ResponseEntity<List<TaskResponse>> getByAssignee(@PathVariable UUID assigneeId) {
+        return ResponseEntity.ok(taskService.getAssigneeTasks(assigneeId));
+    }
+
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<TaskResponse>> getProjectTasks(@PathVariable UUID projectId) {
         return ResponseEntity.ok(taskService.getProjectTasks(projectId));

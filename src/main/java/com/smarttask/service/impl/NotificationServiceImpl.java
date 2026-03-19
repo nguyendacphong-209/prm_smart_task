@@ -51,9 +51,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void markAllAsRead(UUID userId) {
-        List<Notification> unread = notificationRepository.findByRecipientIdAndRead(userId, false);
-        unread.forEach(n -> n.setRead(true));
-        notificationRepository.saveAll(unread);
+        notificationRepository.markAllAsReadByRecipientId(userId);
     }
 
     @Override

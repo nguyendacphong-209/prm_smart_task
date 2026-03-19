@@ -3,6 +3,7 @@ package com.smarttask.controller;
 import com.smarttask.dto.response.NotificationResponse;
 import com.smarttask.entity.User;
 import com.smarttask.exception.ResourceNotFoundException;
+import com.smarttask.repository.NotificationRepository;
 import com.smarttask.repository.UserRepository;
 import com.smarttask.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -20,6 +22,7 @@ import java.util.UUID;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
     private UUID getUserId(UserDetails userDetails) {
@@ -31,6 +34,12 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<List<NotificationResponse>> getAll(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(notificationService.getUserNotifications(getUserId(userDetails)));
+    }
+
+    @GetMapping("/unread-count")
+    public ResponseEntity<Map<String, Long>> getUnreadCount(@AuthenticationPrincipal UserDetails userDetails) {
+        long count = notificationRepository.countByRecipientIdAndRead(getUserId(userDetails), false);
+        return ResponseEntity.ok(Map.of("count", count));
     }
 
     @GetMapping("/unread")

@@ -71,7 +71,8 @@ Smart Task Manager is a collaborative task management API built with Spring Boot
 - `POST /api/tasks` - Create task
 - `GET /api/tasks/{id}` - Get task
 - `GET /api/tasks/project/{projectId}` - List project tasks
-- `GET /api/tasks/project/{projectId}/status/{status}` - Filter by status
+- `GET /api/tasks/project/{projectId}/status/{status}` - Filter by status (Kanban)
+- `GET /api/tasks/assignee/{assigneeId}` - List tasks assigned to a user
 - `PUT /api/tasks/{id}` - Update task
 - `DELETE /api/tasks/{id}` - Delete task
 - `PATCH /api/tasks/{id}/assign/{assigneeId}` - Assign task
@@ -86,5 +87,6 @@ Smart Task Manager is a collaborative task management API built with Spring Boot
 ### Notifications
 - `GET /api/notifications` - Get all notifications
 - `GET /api/notifications/unread` - Get unread notifications
+- `GET /api/notifications/unread-count` - Get unread notification count
 - `PATCH /api/notifications/{id}/read` - Mark as read
 - `PATCH /api/notifications/read-all` - Mark all as read

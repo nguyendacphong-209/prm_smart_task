@@ -35,6 +35,11 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse createTask(TaskRequest request, UUID userId) {
         Project project = projectRepository.findById(request.getProjectId())
             .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+        User assignee = null;
+        if (request.getAssigneeId() != null) {
+            assignee = userRepository.findById(request.getAssigneeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Assignee not found"));
+        }
         Task task = Task.builder()
             .title(request.getTitle())
             .description(request.getDescription())
@@ -42,13 +47,10 @@ public class TaskServiceImpl implements TaskService {
             .priority(request.getPriority())
             .deadline(request.getDeadline())
             .project(project)
+            .assignee(assignee)
             .build();
         Task savedTask = taskRepository.save(task);
-        if (request.getAssigneeId() != null) {
-            User assignee = userRepository.findById(request.getAssigneeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Assignee not found"));
-            savedTask.setAssignee(assignee);
-            savedTask = taskRepository.save(savedTask);
+        if (assignee != null) {
             notificationService.createNotification(
                 NotificationType.TASK_ASSIGNED,
                 "You have been assigned to task: " + savedTask.getTitle(),
@@ -74,6 +76,12 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskResponse> getProjectTasksByStatus(UUID projectId, TaskStatus status) {
         return taskRepository.findByProjectIdAndStatus(projectId, status)
+            .stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TaskResponse> getAssigneeTasks(UUID assigneeId) {
+        return taskRepository.findByAssigneeId(assigneeId)
             .stream().map(this::toResponse).collect(Collectors.toList());
     }
 

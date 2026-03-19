@@ -11,6 +11,7 @@ public interface TaskService {
     TaskResponse getTask(UUID id);
     List<TaskResponse> getProjectTasks(UUID projectId);
     List<TaskResponse> getProjectTasksByStatus(UUID projectId, TaskStatus status);
+    List<TaskResponse> getAssigneeTasks(UUID assigneeId);
     TaskResponse updateTask(UUID id, TaskRequest request);
     void deleteTask(UUID id);
     /** userId reserved for future authorization checks (e.g., only project member can assign) */

@@ -43,9 +43,8 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     public WorkspaceResponse getWorkspace(UUID id, UUID userId) {
         Workspace workspace = workspaceRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Workspace not found"));
-        boolean isOwner = workspace.getOwner().getId().equals(userId);
         boolean isMember = workspace.getMembers().stream().anyMatch(m -> m.getId().equals(userId));
-        if (!isOwner && !isMember) {
+        if (!isMember) {
             throw new UnauthorizedException("You do not have access to this workspace");
         }
         return toResponse(workspace);
