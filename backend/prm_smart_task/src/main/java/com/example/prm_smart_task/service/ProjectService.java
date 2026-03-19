@@ -10,6 +10,7 @@ import com.example.prm_smart_task.dto.common.ApiMessageResponse;
 import com.example.prm_smart_task.dto.project.CreateProjectRequest;
 import com.example.prm_smart_task.dto.project.ProjectResponse;
 import com.example.prm_smart_task.dto.project.UpdateProjectRequest;
+import com.example.prm_smart_task.dto.task.TaskLabelResponse;
 import com.example.prm_smart_task.entity.AppUser;
 import com.example.prm_smart_task.entity.Project;
 import com.example.prm_smart_task.entity.TaskStatus;
@@ -18,6 +19,7 @@ import com.example.prm_smart_task.entity.WorkspaceMember;
 import com.example.prm_smart_task.exception.BadRequestException;
 import com.example.prm_smart_task.exception.UnauthorizedException;
 import com.example.prm_smart_task.repository.AppUserRepository;
+import com.example.prm_smart_task.repository.LabelRepository;
 import com.example.prm_smart_task.repository.ProjectRepository;
 import com.example.prm_smart_task.repository.TaskStatusRepository;
 import com.example.prm_smart_task.repository.WorkspaceMemberRepository;
@@ -31,18 +33,21 @@ public class ProjectService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final AppUserRepository appUserRepository;
     private final TaskStatusRepository taskStatusRepository;
+    private final LabelRepository labelRepository;
 
     public ProjectService(
             ProjectRepository projectRepository,
             WorkspaceRepository workspaceRepository,
             WorkspaceMemberRepository workspaceMemberRepository,
             AppUserRepository appUserRepository,
-            TaskStatusRepository taskStatusRepository) {
+            TaskStatusRepository taskStatusRepository,
+            LabelRepository labelRepository) {
         this.projectRepository = projectRepository;
         this.workspaceRepository = workspaceRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.appUserRepository = appUserRepository;
         this.taskStatusRepository = taskStatusRepository;
+        this.labelRepository = labelRepository;
     }
 
     @Transactional
@@ -111,6 +116,20 @@ public class ProjectService {
         projectRepository.delete(project);
 
         return new ApiMessageResponse("Project deleted successfully");
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskLabelResponse> getLabelsByProject(String currentEmail, UUID projectId) {
+        AppUser currentUser = getUserByEmail(currentEmail);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new BadRequestException("Project not found"));
+
+        ensureWorkspaceMember(currentUser, project.getWorkspace().getId());
+
+        return labelRepository.findByProjectId(projectId)
+                .stream()
+                .map(label -> new TaskLabelResponse(label.getId(), label.getName(), label.getColor()))
+                .toList();
     }
 
     private AppUser getUserByEmail(String email) {

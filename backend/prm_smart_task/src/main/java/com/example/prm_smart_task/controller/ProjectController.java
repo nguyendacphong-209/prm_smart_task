@@ -19,6 +19,7 @@ import com.example.prm_smart_task.dto.common.ApiMessageResponse;
 import com.example.prm_smart_task.dto.project.CreateProjectRequest;
 import com.example.prm_smart_task.dto.project.ProjectResponse;
 import com.example.prm_smart_task.dto.project.UpdateProjectRequest;
+import com.example.prm_smart_task.dto.task.TaskLabelResponse;
 import com.example.prm_smart_task.service.ProjectService;
 
 import jakarta.validation.Valid;
@@ -56,6 +57,14 @@ public class ProjectController {
             @PathVariable UUID projectId,
             @Valid @RequestBody UpdateProjectRequest request) {
         ProjectResponse response = projectService.updateProject(authentication.getName(), projectId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/projects/{projectId}/labels")
+    public ResponseEntity<List<TaskLabelResponse>> getLabelsByProject(
+            Authentication authentication,
+            @PathVariable UUID projectId) {
+        List<TaskLabelResponse> response = projectService.getLabelsByProject(authentication.getName(), projectId);
         return ResponseEntity.ok(response);
     }
 

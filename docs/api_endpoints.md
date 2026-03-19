@@ -101,6 +101,22 @@
 - **GET** `/api/workspaces/{workspaceId}`
 - **Response:** `WorkspaceResponse` (includes myRole: "owner" or "member" or "admin")
 
+### Update Workspace
+- **PUT** `/api/workspaces/{workspaceId}`
+- **Body:**
+  ```json
+  {
+    "name": "Updated Workspace Name"
+  }
+  ```
+- **Response:** `WorkspaceResponse`
+- **Note:** Owner only
+
+### Delete Workspace
+- **DELETE** `/api/workspaces/{workspaceId}`
+- **Response:** `{ "message": "Workspace deleted successfully" }`
+- **Note:** Owner only
+
 ### Invite Member
 - **POST** `/api/workspaces/{workspaceId}/members/invite`
 - **Body:**
@@ -116,6 +132,11 @@
 ### List Workspace Members
 - **GET** `/api/workspaces/{workspaceId}/members`
 - **Response:** `List<WorkspaceMemberResponse>` (id, userId, email, fullName, avatarUrl, role)
+
+### Assignee Select Options (by Workspace)
+- **GET** `/api/workspaces/{workspaceId}/assignees`
+- **Response:** `List<WorkspaceAssigneeOptionResponse>` (userId, email, fullName, avatarUrl)
+- **Note:** Dùng để render dropdown/select assignee khi tạo/cập nhật task
 
 ### Update Member Role
 - **PUT** `/api/workspaces/{workspaceId}/members/{userId}/role`
@@ -183,12 +204,13 @@
     "description": "Flutter UI for login",
     "priority": "high",
     "deadline": "2026-03-30T10:00:00",
-    "statusId": null,
+    "statusId": "uuid-status-todo",
     "assigneeIds": ["uuid1", "uuid2"],
     "labelIds": ["uuid1"]
   }
   ```
 - **Response:** `TaskResponse` (id, projectId, statusId, title, description, priority, deadline, createdBy, createdAt, assignees, labels)
+- **Note:** `statusId` là bắt buộc để task luôn xuất hiện trên Kanban board
 
 ### List Tasks by Project
 - **GET** `/api/projects/{projectId}/tasks`
