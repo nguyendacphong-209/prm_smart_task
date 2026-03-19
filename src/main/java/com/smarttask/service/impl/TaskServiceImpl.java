@@ -91,6 +91,12 @@ public class TaskServiceImpl implements TaskService {
             User assignee = userRepository.findById(request.getAssigneeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Assignee not found"));
             task.setAssignee(assignee);
+            notificationService.createNotification(
+                NotificationType.TASK_ASSIGNED,
+                "You have been assigned to task: " + task.getTitle(),
+                assignee.getId(),
+                task.getId()
+            );
         } else {
             task.setAssignee(null);
         }

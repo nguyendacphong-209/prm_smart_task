@@ -3,6 +3,7 @@ com/smarttask/dto/request/RegisterRequest.class
 com/smarttask/repository/WorkspaceRepository.class
 com/smarttask/dto/response/CommentResponse.class
 com/smarttask/controller/ProjectController.class
+com/smarttask/dto/request/UpdateCommentRequest.class
 com/smarttask/dto/response/NotificationResponse.class
 com/smarttask/controller/NotificationController.class
 com/smarttask/repository/CommentRepository.class
@@ -61,6 +62,7 @@ com/smarttask/entity/Workspace.class
 com/smarttask/enums/TaskPriority.class
 com/smarttask/service/impl/CommentServiceImpl.class
 com/smarttask/repository/UserRepository.class
+com/smarttask/dto/request/UpdateTaskStatusRequest.class
 com/smarttask/dto/response/ProjectResponse$ProjectResponseBuilder.class
 com/smarttask/SmartTaskApplication.class
 com/smarttask/entity/Comment.class

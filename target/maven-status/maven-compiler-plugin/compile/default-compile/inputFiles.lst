@@ -18,6 +18,7 @@
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/SmartTaskApplication.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/service/impl/AuthServiceImpl.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/dto/response/NotificationResponse.java
+/home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/dto/request/UpdateCommentRequest.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/service/impl/TaskServiceImpl.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/controller/AuthController.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/dto/request/CommentRequest.java
@@ -35,6 +36,7 @@
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/dto/response/AuthResponse.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/dto/response/CommentResponse.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/controller/NotificationController.java
+/home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/dto/request/UpdateTaskStatusRequest.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/controller/WorkspaceController.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/controller/ProjectController.java
 /home/runner/work/prm_smart_task/prm_smart_task/src/main/java/com/smarttask/service/impl/WorkspaceServiceImpl.java

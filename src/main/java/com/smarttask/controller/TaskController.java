@@ -15,8 +15,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import com.smarttask.dto.request.UpdateTaskStatusRequest;
+
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -78,15 +79,8 @@ public class TaskController {
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<TaskResponse> updateStatus(@PathVariable UUID id,
-                                                      @RequestBody Map<String, String> body,
+                                                      @Valid @RequestBody UpdateTaskStatusRequest body,
                                                       @AuthenticationPrincipal UserDetails userDetails) {
-        String statusValue = body.get("status");
-        TaskStatus status;
-        try {
-            status = TaskStatus.valueOf(statusValue);
-        } catch (IllegalArgumentException | NullPointerException e) {
-            throw new IllegalArgumentException("Invalid task status. Valid values are: TODO, IN_PROGRESS, IN_REVIEW, DONE");
-        }
-        return ResponseEntity.ok(taskService.updateTaskStatus(id, status, getUserId(userDetails)));
+        return ResponseEntity.ok(taskService.updateTaskStatus(id, body.getStatus(), getUserId(userDetails)));
     }
 }

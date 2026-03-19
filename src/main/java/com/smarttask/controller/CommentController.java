@@ -14,8 +14,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import com.smarttask.dto.request.UpdateCommentRequest;
+
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -46,9 +47,9 @@ public class CommentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<CommentResponse> update(@PathVariable UUID id,
-                                                   @RequestBody Map<String, String> body,
+                                                   @Valid @RequestBody UpdateCommentRequest body,
                                                    @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(commentService.updateComment(id, body.get("content"), getUserId(userDetails)));
+        return ResponseEntity.ok(commentService.updateComment(id, body.getContent(), getUserId(userDetails)));
     }
 
     @DeleteMapping("/{id}")
