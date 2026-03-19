@@ -1,0 +1,15 @@
+.git
+.gitignore
+.gradle
+build
+out
+.idea
+.vscode
+.DS_Store
+*.iml
+*.log
+.env
+.env.local
+.env.*.local
+src/test
+test_api
