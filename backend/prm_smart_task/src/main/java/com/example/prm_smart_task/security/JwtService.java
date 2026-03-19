@@ -48,8 +48,20 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, String expectedEmail) {
-        String email = extractEmail(token);
-        return expectedEmail.equals(email) && !isTokenExpired(token);
+        String email = normalizeEmail(extractEmail(token));
+        String normalizedExpectedEmail = normalizeEmail(expectedEmail);
+        return normalizedExpectedEmail != null
+                && normalizedExpectedEmail.equals(email)
+                && !isTokenExpired(token);
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+
+        String normalizedEmail = email.trim().toLowerCase();
+        return normalizedEmail.isEmpty() ? null : normalizedEmail;
     }
 
     private boolean isTokenExpired(String token) {
