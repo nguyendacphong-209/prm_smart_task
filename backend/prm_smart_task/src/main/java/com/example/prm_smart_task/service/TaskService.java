@@ -3,6 +3,7 @@ package com.example.prm_smart_task.service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -218,11 +219,17 @@ public class TaskService {
                 .collect(java.util.stream.Collectors.toSet());
 
         taskAssignmentRepository.deleteByTaskId(task.getId());
-        if (assigneeIds.isEmpty()) {
+
+        taskAssignmentRepository.flush();
+
+        Set<UUID> uniqueUserIds = assigneeIds.stream()
+            .filter(Objects::nonNull)
+            .collect(java.util.stream.Collectors.toSet());
+
+        if (uniqueUserIds.isEmpty()) {
             return;
         }
 
-        Set<UUID> uniqueUserIds = new HashSet<>(assigneeIds);
         for (UUID userId : uniqueUserIds) {
             WorkspaceMember member = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                     .orElseThrow(() -> new BadRequestException("Assignee must be a member of workspace"));
