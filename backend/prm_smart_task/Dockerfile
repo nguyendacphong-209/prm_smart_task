@@ -5,7 +5,7 @@ COPY . .
 RUN gradle bootJar --no-daemon
 
 # Runtime stage
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=builder /app/build/libs/prm_smart_task-*.jar app.jar
 
