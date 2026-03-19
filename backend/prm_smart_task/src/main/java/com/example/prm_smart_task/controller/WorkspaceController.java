@@ -19,6 +19,8 @@ import com.example.prm_smart_task.dto.common.ApiMessageResponse;
 import com.example.prm_smart_task.dto.workspace.CreateWorkspaceRequest;
 import com.example.prm_smart_task.dto.workspace.InviteWorkspaceMemberRequest;
 import com.example.prm_smart_task.dto.workspace.UpdateWorkspaceMemberRoleRequest;
+import com.example.prm_smart_task.dto.workspace.UpdateWorkspaceRequest;
+import com.example.prm_smart_task.dto.workspace.WorkspaceAssigneeOptionResponse;
 import com.example.prm_smart_task.dto.workspace.WorkspaceMemberResponse;
 import com.example.prm_smart_task.dto.workspace.WorkspaceResponse;
 import com.example.prm_smart_task.service.WorkspaceService;
@@ -57,6 +59,23 @@ public class WorkspaceController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{workspaceId}")
+    public ResponseEntity<WorkspaceResponse> updateWorkspace(
+            Authentication authentication,
+            @PathVariable UUID workspaceId,
+            @Valid @RequestBody UpdateWorkspaceRequest request) {
+        WorkspaceResponse response = workspaceService.updateWorkspace(authentication.getName(), workspaceId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{workspaceId}")
+    public ResponseEntity<ApiMessageResponse> deleteWorkspace(
+            Authentication authentication,
+            @PathVariable UUID workspaceId) {
+        ApiMessageResponse response = workspaceService.deleteWorkspace(authentication.getName(), workspaceId);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{workspaceId}/members/invite")
     public ResponseEntity<WorkspaceMemberResponse> inviteWorkspaceMember(
             Authentication authentication,
@@ -71,6 +90,14 @@ public class WorkspaceController {
             Authentication authentication,
             @PathVariable UUID workspaceId) {
         List<WorkspaceMemberResponse> response = workspaceService.getWorkspaceMembers(authentication.getName(), workspaceId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{workspaceId}/assignees")
+    public ResponseEntity<List<WorkspaceAssigneeOptionResponse>> getWorkspaceAssignees(
+            Authentication authentication,
+            @PathVariable UUID workspaceId) {
+        List<WorkspaceAssigneeOptionResponse> response = workspaceService.getWorkspaceAssignees(authentication.getName(), workspaceId);
         return ResponseEntity.ok(response);
     }
 

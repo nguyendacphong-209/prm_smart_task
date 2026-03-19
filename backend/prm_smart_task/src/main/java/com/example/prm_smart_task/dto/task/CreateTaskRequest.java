@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CreateTaskRequest(
@@ -20,6 +21,7 @@ public record CreateTaskRequest(
 
         LocalDateTime deadline,
 
+        @NotNull(message = "Task status is required")
         UUID statusId,
 
         List<UUID> assigneeIds,

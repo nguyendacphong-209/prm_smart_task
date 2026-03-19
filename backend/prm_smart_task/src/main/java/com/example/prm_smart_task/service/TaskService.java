@@ -77,11 +77,9 @@ public class TaskService {
         task.setDeadline(request.deadline());
         task.setCreatedBy(currentUser);
 
-        if (request.statusId() != null) {
-            TaskStatus status = taskStatusRepository.findByIdAndProjectId(request.statusId(), projectId)
-                    .orElseThrow(() -> new BadRequestException("Task status not found in this project"));
-            task.setStatus(status);
-        }
+        TaskStatus status = taskStatusRepository.findByIdAndProjectId(request.statusId(), projectId)
+            .orElseThrow(() -> new BadRequestException("Task status not found in this project"));
+        task.setStatus(status);
 
         applyLabels(task, projectId, request.labelIds());
         Task savedTask = taskRepository.save(task);
@@ -107,6 +105,10 @@ public class TaskService {
         AppUser currentUser = getUserByEmail(currentEmail);
         Task task = getTask(taskId);
         ensureWorkspaceMember(currentUser, task.getProject().getWorkspace().getId());
+
+        if (task.getStatus() == null && request.statusId() == null) {
+            throw new BadRequestException("Task must have a status. Please provide statusId.");
+        }
 
         if (request.title() != null) {
             String normalizedTitle = request.title().trim();

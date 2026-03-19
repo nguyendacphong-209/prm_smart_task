@@ -12,12 +12,14 @@ import com.example.prm_smart_task.dto.project.ProjectResponse;
 import com.example.prm_smart_task.dto.project.UpdateProjectRequest;
 import com.example.prm_smart_task.entity.AppUser;
 import com.example.prm_smart_task.entity.Project;
+import com.example.prm_smart_task.entity.TaskStatus;
 import com.example.prm_smart_task.entity.Workspace;
 import com.example.prm_smart_task.entity.WorkspaceMember;
 import com.example.prm_smart_task.exception.BadRequestException;
 import com.example.prm_smart_task.exception.UnauthorizedException;
 import com.example.prm_smart_task.repository.AppUserRepository;
 import com.example.prm_smart_task.repository.ProjectRepository;
+import com.example.prm_smart_task.repository.TaskStatusRepository;
 import com.example.prm_smart_task.repository.WorkspaceMemberRepository;
 import com.example.prm_smart_task.repository.WorkspaceRepository;
 
@@ -28,16 +30,19 @@ public class ProjectService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final AppUserRepository appUserRepository;
+    private final TaskStatusRepository taskStatusRepository;
 
     public ProjectService(
             ProjectRepository projectRepository,
             WorkspaceRepository workspaceRepository,
             WorkspaceMemberRepository workspaceMemberRepository,
-            AppUserRepository appUserRepository) {
+            AppUserRepository appUserRepository,
+            TaskStatusRepository taskStatusRepository) {
         this.projectRepository = projectRepository;
         this.workspaceRepository = workspaceRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.appUserRepository = appUserRepository;
+        this.taskStatusRepository = taskStatusRepository;
     }
 
     @Transactional
@@ -54,6 +59,7 @@ public class ProjectService {
         project.setDescription(normalizeNullableText(request.description()));
 
         Project savedProject = projectRepository.save(project);
+        seedDefaultStatuses(savedProject);
         return mapProject(savedProject);
     }
 
@@ -148,5 +154,13 @@ public class ProjectService {
                 project.getName(),
                 project.getDescription(),
                 project.getCreatedAt());
+    }
+
+    private void seedDefaultStatuses(Project project) {
+        TaskStatus toDo = new TaskStatus();
+        toDo.setProject(project);
+        toDo.setName("To Do");
+        toDo.setPosition(1);
+        taskStatusRepository.save(toDo);
     }
 }

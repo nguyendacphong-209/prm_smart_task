@@ -1,7 +1,7 @@
 package com.example.prm_smart_task.service;
 
-import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +11,8 @@ import com.example.prm_smart_task.dto.common.ApiMessageResponse;
 import com.example.prm_smart_task.dto.workspace.CreateWorkspaceRequest;
 import com.example.prm_smart_task.dto.workspace.InviteWorkspaceMemberRequest;
 import com.example.prm_smart_task.dto.workspace.UpdateWorkspaceMemberRoleRequest;
+import com.example.prm_smart_task.dto.workspace.UpdateWorkspaceRequest;
+import com.example.prm_smart_task.dto.workspace.WorkspaceAssigneeOptionResponse;
 import com.example.prm_smart_task.dto.workspace.WorkspaceMemberResponse;
 import com.example.prm_smart_task.dto.workspace.WorkspaceResponse;
 import com.example.prm_smart_task.entity.AppUser;
@@ -86,6 +88,26 @@ public class WorkspaceService {
         }
 
         return mapWorkspace(workspace, currentUser.getId());
+    }
+
+    @Transactional
+    public WorkspaceResponse updateWorkspace(String currentEmail, UUID workspaceId, UpdateWorkspaceRequest request) {
+        AppUser currentUser = getUserByEmail(currentEmail);
+        Workspace workspace = getOwnerWorkspace(workspaceId, currentUser.getId());
+
+        workspace.setName(request.name().trim());
+        Workspace updatedWorkspace = workspaceRepository.save(workspace);
+
+        return mapWorkspace(updatedWorkspace, currentUser.getId());
+    }
+
+    @Transactional
+    public ApiMessageResponse deleteWorkspace(String currentEmail, UUID workspaceId) {
+        AppUser currentUser = getUserByEmail(currentEmail);
+        Workspace workspace = getOwnerWorkspace(workspaceId, currentUser.getId());
+
+        workspaceRepository.delete(workspace);
+        return new ApiMessageResponse("Workspace deleted successfully");
     }
 
     @Transactional
@@ -166,6 +188,20 @@ public class WorkspaceService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<WorkspaceAssigneeOptionResponse> getWorkspaceAssignees(String currentEmail, UUID workspaceId) {
+        AppUser currentUser = getUserByEmail(currentEmail);
+        boolean isMember = workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, currentUser.getId());
+        if (!isMember) {
+            throw new UnauthorizedException("You are not a member of this workspace");
+        }
+
+        return workspaceMemberRepository.findByWorkspaceId(workspaceId)
+                .stream()
+                .map(this::mapAssigneeOption)
+                .toList();
+    }
+
     private AppUser getUserByEmail(String email) {
         String normalizedEmail = email.trim().toLowerCase();
         return appUserRepository.findByEmail(normalizedEmail)
@@ -213,5 +249,13 @@ public class WorkspaceService {
                 member.getUser().getFullName(),
                 member.getUser().getAvatarUrl(),
                 member.getRole());
+    }
+
+    private WorkspaceAssigneeOptionResponse mapAssigneeOption(WorkspaceMember member) {
+        return new WorkspaceAssigneeOptionResponse(
+                member.getUser().getId(),
+                member.getUser().getEmail(),
+                member.getUser().getFullName(),
+                member.getUser().getAvatarUrl());
     }
 }
