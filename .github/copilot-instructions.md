@@ -225,3 +225,7 @@ When generating code:
 Use requirements from:
 
 - /docs/requirements.md
+
+## Database Reference
+
+- Use schema from /docs/database.sql

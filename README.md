@@ -91,7 +91,10 @@ The system is inspired by tools like Trello and Notion, focusing on small to med
 ### 🗄 Database
 
 - PostgreSQL
+## 📊 Database Schema
 
+Database schema is defined in:
+/docs/database.sql
 ---
 
 ## 🧱 System Architecture
