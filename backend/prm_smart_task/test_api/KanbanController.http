@@ -1,0 +1,33 @@
+### Smart Task - KanbanController API Test
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Auth
+@accessToken = REPLACE_ACCESS_TOKEN
+
+### Dynamic IDs
+@projectId = REPLACE_PROJECT_ID
+@taskId = REPLACE_TASK_ID
+@statusId = REPLACE_STATUS_ID
+
+### 1) Get Kanban board by project (columns + tasks)
+GET {{baseUrl}}/api/projects/{{projectId}}/kanban
+Authorization: Bearer {{accessToken}}
+
+### 2) Create new task status (owner/admin only)
+POST {{baseUrl}}/api/projects/{{projectId}}/statuses
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "In Review"
+}
+
+### 3) Drag & drop task to another status
+PUT {{baseUrl}}/api/tasks/{{taskId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "statusId": "{{statusId}}"
+}

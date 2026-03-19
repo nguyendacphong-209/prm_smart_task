@@ -1,0 +1,49 @@
+### Smart Task - TaskController API Test
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Auth
+@accessToken = REPLACE_ACCESS_TOKEN
+
+### Dynamic IDs
+@projectId = REPLACE_PROJECT_ID
+@taskId = REPLACE_TASK_ID
+@statusId = REPLACE_STATUS_ID_OR_NULL
+@assigneeUserId = REPLACE_ASSIGNEE_USER_ID
+@labelId = REPLACE_LABEL_ID
+
+### 1) Create task
+POST {{baseUrl}}/api/projects/{{projectId}}/tasks
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Implement login screen",
+  "description": "Flutter login + validation",
+  "priority": "high",
+  "deadline": "2026-03-30T10:00:00",
+  "statusId": null,
+  "assigneeIds": ["{{assigneeUserId}}"],
+  "labelIds": ["{{labelId}}"]
+}
+
+### 2) List tasks by project
+GET {{baseUrl}}/api/projects/{{projectId}}/tasks
+Authorization: Bearer {{accessToken}}
+
+### 3) Update task (title/priority/deadline/assignees/labels)
+PUT {{baseUrl}}/api/tasks/{{taskId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Implement login + register screens",
+  "priority": "medium",
+  "deadline": "2026-04-01T17:00:00",
+  "assigneeIds": ["{{assigneeUserId}}"],
+  "labelIds": ["{{labelId}}"]
+}
+
+### 4) Delete task
+DELETE {{baseUrl}}/api/tasks/{{taskId}}
+Authorization: Bearer {{accessToken}}

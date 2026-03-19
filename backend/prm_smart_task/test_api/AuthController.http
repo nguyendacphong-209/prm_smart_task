@@ -1,0 +1,68 @@
+### Smart Task - AuthController API Test
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Tokens (copy/paste manually after login/register)
+@accessToken = REPLACE_ACCESS_TOKEN
+@refreshToken = REPLACE_REFRESH_TOKEN
+
+### 1) Register
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "phong.test@example.com",
+  "password": "12345678",
+  "fullName": "Phong Test",
+  "avatarUrl": "https://example.com/avatar.png"
+}
+
+### 2) Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "phong.test@example.com",
+  "password": "12345678"
+}
+
+### 3) Refresh token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 4) Logout (revoke refresh token)
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### 5) Get current profile
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+
+### 6) Update current profile
+PUT {{baseUrl}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Phong Updated",
+  "avatarUrl": "https://example.com/new-avatar.png"
+}
+
+### 7) Change password
+PUT {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "12345678",
+  "newPassword": "new123456",
+  "confirmNewPassword": "new123456"
+}

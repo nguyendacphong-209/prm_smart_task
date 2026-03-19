@@ -1,0 +1,38 @@
+### Smart Task - ProjectController API Test
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Auth
+@accessToken = REPLACE_ACCESS_TOKEN
+
+### Dynamic IDs
+@workspaceId = REPLACE_WORKSPACE_ID
+@projectId = REPLACE_PROJECT_ID
+
+### 1) Create project (workspace owner/admin only)
+POST {{baseUrl}}/api/workspaces/{{workspaceId}}/projects
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Project Alpha",
+  "description": "Mobile app MVP"
+}
+
+### 2) Get all projects by workspace (workspace member can view)
+GET {{baseUrl}}/api/workspaces/{{workspaceId}}/projects
+Authorization: Bearer {{accessToken}}
+
+### 3) Update project (workspace owner/admin only)
+PUT {{baseUrl}}/api/projects/{{projectId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Project Alpha Updated",
+  "description": "Updated scope"
+}
+
+### 4) Delete project (workspace owner/admin only)
+DELETE {{baseUrl}}/api/projects/{{projectId}}
+Authorization: Bearer {{accessToken}}

@@ -1,0 +1,30 @@
+### Smart Task - NotificationController API Test
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Auth
+@accessToken = REPLACE_ACCESS_TOKEN
+
+### Dynamic IDs
+@notificationId = REPLACE_NOTIFICATION_ID
+
+### 1) Get my notifications (newest first)
+GET {{baseUrl}}/api/notifications
+Authorization: Bearer {{accessToken}}
+
+### 2) Get unread notification count
+GET {{baseUrl}}/api/notifications/unread-count
+Authorization: Bearer {{accessToken}}
+
+### 3) Mark one notification as read
+PUT {{baseUrl}}/api/notifications/{{notificationId}}/read
+Authorization: Bearer {{accessToken}}
+
+### 4) Mark all notifications as read
+PUT {{baseUrl}}/api/notifications/read-all
+Authorization: Bearer {{accessToken}}
+
+### Quick flow to generate notifications:
+### A) Assign task to a member via TaskController update/create API
+### B) Move task status via KanbanController API
+### C) Use endpoint (1) to see generated notifications

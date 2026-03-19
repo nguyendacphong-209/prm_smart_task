@@ -1,0 +1,54 @@
+### Smart Task - WorkspaceController API Test
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Auth
+@accessToken = REPLACE_ACCESS_TOKEN
+
+### Dynamic IDs (update manually from previous responses)
+@workspaceId = REPLACE_WORKSPACE_ID
+@memberUserId = REPLACE_MEMBER_USER_ID
+
+### 1) Create workspace
+POST {{baseUrl}}/api/workspaces
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Smart Workspace A"
+}
+
+### 2) Get all workspaces (owner + participating)
+GET {{baseUrl}}/api/workspaces/my
+Authorization: Bearer {{accessToken}}
+
+### 3) Get workspace detail (includes myRole)
+GET {{baseUrl}}/api/workspaces/{{workspaceId}}
+Authorization: Bearer {{accessToken}}
+
+### 4) Invite member (owner only)
+POST {{baseUrl}}/api/workspaces/{{workspaceId}}/members/invite
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "email": "member.test@example.com",
+  "role": "member"
+}
+
+### 5) List workspace members (owner/member/admin)
+GET {{baseUrl}}/api/workspaces/{{workspaceId}}/members
+Authorization: Bearer {{accessToken}}
+
+### 6) Update member role (owner only)
+PUT {{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{memberUserId}}/role
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "role": "admin"
+}
+
+### 7) Remove member (owner only)
+DELETE {{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{memberUserId}}
+Authorization: Bearer {{accessToken}}

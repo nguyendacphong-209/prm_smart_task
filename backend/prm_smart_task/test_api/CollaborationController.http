@@ -1,0 +1,43 @@
+### Smart Task - CollaborationController API Test
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Auth
+@accessToken = REPLACE_ACCESS_TOKEN
+
+### Dynamic IDs
+@taskId = REPLACE_TASK_ID
+
+### 1) Add comment (with mentions in content)
+POST {{baseUrl}}/api/tasks/{{taskId}}/comments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "content": "Please review this task @alice@example.com and @bob@example.com"
+}
+
+### 2) List comments by task
+GET {{baseUrl}}/api/tasks/{{taskId}}/comments
+Authorization: Bearer {{accessToken}}
+
+### 3) Mock upload attachment (fake storage URL)
+POST {{baseUrl}}/api/tasks/{{taskId}}/attachments/mock-upload
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=MyBoundary
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="mock-spec.pdf"
+Content-Type: application/pdf
+
+< ./test_api/files/mock-spec.pdf
+--MyBoundary--
+
+### 4) List attachments by task
+GET {{baseUrl}}/api/tasks/{{taskId}}/attachments
+Authorization: Bearer {{accessToken}}
+
+### Notes:
+### - Mention parser reads emails after @ in comment content.
+### - If you do not have a real file yet, create one: backend/prm_smart_task/test_api/files/mock-spec.pdf
+### - Endpoint 3 does not upload to cloud; it returns a generated fake URL in fileUrl.

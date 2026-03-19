@@ -63,7 +63,9 @@ Người muốn quản lý công việc cá nhân
 Đăng ký tài khoản
 Đăng nhập
 Đăng xuất
+Xem hồ sơ cá nhân
 Cập nhật hồ sơ cá nhân
+Đổi mật khẩu
 2. Workspace Management
 Tạo workspace
 Mời thành viên vào workspace
@@ -181,7 +183,7 @@ Riverpod (State Management)
 Dio (HTTP Client)
 GoRouter (Navigation)
 Backend
-Spring Boot hoặc NestJS
+Spring Boot 
 REST API
 Database
 PostgreSQL

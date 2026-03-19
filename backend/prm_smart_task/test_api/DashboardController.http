@@ -1,0 +1,40 @@
+### Smart Task - DashboardController API Test
+### Base URL
+@baseUrl = http://localhost:8080
+
+### Auth
+@accessToken = REPLACE_ACCESS_TOKEN
+
+### Dynamic IDs
+@projectId = REPLACE_PROJECT_ID
+
+### 1) Get my dashboard (assigned tasks summary)
+GET {{baseUrl}}/api/dashboard/me
+Authorization: Bearer {{accessToken}}
+
+### Description:
+### - totalAssignedTasks: How many tasks are assigned to me
+### - completedTasks: Count of finished tasks (highest status position)
+### - overdueTasks: Tasks past deadline, not completed
+### - dueSoonTasks: Deadline within 7 days, not completed
+### - tasksByPriority: Grouping of {priority: count}
+### - tasksByStatus: Grouping of {statusName: count}
+
+### 2) Get project dashboard (team progress)
+GET {{baseUrl}}/api/dashboard/projects/{{projectId}}
+Authorization: Bearer {{accessToken}}
+
+### Description:
+### - projectId, projectName: Project reference
+### - completionPercentage: (completedTasks / totalTasks) * 100.0
+### - totalTasks / completedTasks: Counters
+### - tasksByStatus: Grouping of {statusName: count}
+### - tasksByPriority: Grouping of {priority: count}
+
+### Quick setup to test:
+### A) Create project via ProjectController
+### B) Create multiple tasks with priorities (high/medium/low) via TaskController
+### C) Assign tasks to team members
+### D) Move some tasks to Done status via KanbanController
+### E) Call endpoint (1) to see personal stats
+### F) Call endpoint (2) to see project completion %

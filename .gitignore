@@ -1,0 +1,37 @@
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+*.swo
+*~
+
+### IDE ###
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.sts4-cache/
+
+### OS ###
+Thumbs.db
+*.log
+
+### Dependencies ###
+node_modules/
+
+### Build & Output ###
+dist/
+build/
+.gradle/
+target/
+out/
+
+### Environment ###
+.env
+.env.local
+.env.*.local
