@@ -37,12 +37,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || authHeader.isBlank() || !authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
+        String token = authHeader.substring(7).trim();
+        if (token.isEmpty()) {
+            SecurityContextHolder.clearContext();
+            authLogger.warn("Empty bearer token. method={} path={}", request.getMethod(), request.getRequestURI());
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             String email = jwtService.extractEmail(token);
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -55,21 +62,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 } else {
-                    authLogger.warn("JWT rejected by isTokenValid. path={} emailFromToken={}", request.getRequestURI(), email);
+                    SecurityContextHolder.clearContext();
+                    authLogger.warn("JWT rejected by isTokenValid. method={} path={} emailFromToken={}",
+                            request.getMethod(), request.getRequestURI(), email);
                 }
             }
         } catch (JwtException exception) {
             SecurityContextHolder.clearContext();
-            authLogger.warn("JWT parse/verify failed. path={} reason={}", request.getRequestURI(), exception.getMessage());
+            authLogger.warn("JWT parse/verify failed. method={} path={} reason={}",
+                    request.getMethod(), request.getRequestURI(), exception.getMessage());
         } catch (UsernameNotFoundException exception) {
             SecurityContextHolder.clearContext();
-            authLogger.warn("JWT subject user not found. path={} reason={}", request.getRequestURI(), exception.getMessage());
-        } catch (Exception exception) {
-            SecurityContextHolder.clearContext();
-            authLogger.error("Unexpected auth error. path={} type={} message={}",
-                    request.getRequestURI(),
-                    exception.getClass().getSimpleName(),
-                    exception.getMessage());
+            authLogger.warn("JWT subject user not found. method={} path={} reason={}",
+                    request.getMethod(), request.getRequestURI(), exception.getMessage());
         }
 
         filterChain.doFilter(request, response);
