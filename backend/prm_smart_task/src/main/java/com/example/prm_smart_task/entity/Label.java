@@ -35,4 +35,8 @@ public class Label {
 
     @Column(name = "color", length = 20)
     private String color;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private AppUser createdBy;
 }

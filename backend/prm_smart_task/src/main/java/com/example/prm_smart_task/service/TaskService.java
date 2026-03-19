@@ -273,7 +273,9 @@ public class TaskService {
                 .map(label -> new TaskLabelResponse(
                         label.getId(),
                         label.getName(),
-                        label.getColor()))
+                        label.getColor(),
+                        label.getCreatedBy() == null ? null : label.getCreatedBy().getId(),
+                        label.getCreatedBy() == null ? null : label.getCreatedBy().getFullName()))
                 .toList();
 
         return new TaskResponse(

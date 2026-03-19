@@ -5,6 +5,8 @@ import java.util.UUID;
 public record TaskLabelResponse(
         UUID id,
         String name,
-        String color
+        String color,
+        UUID createdById,
+        String creatorFullName
 ) {
 }

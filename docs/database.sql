@@ -105,3 +105,6 @@ CREATE TABLE notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- MIGRATION: Add created_by column to labels table
+ALTER TABLE labels ADD COLUMN created_by UUID REFERENCES users(id) ON DELETE SET NULL;

@@ -128,7 +128,12 @@ public class ProjectService {
 
         return labelRepository.findByProjectId(projectId)
                 .stream()
-                .map(label -> new TaskLabelResponse(label.getId(), label.getName(), label.getColor()))
+                .map(label -> new TaskLabelResponse(
+                        label.getId(),
+                        label.getName(),
+                        label.getColor(),
+                        label.getCreatedBy() == null ? null : label.getCreatedBy().getId(),
+                        label.getCreatedBy() == null ? null : label.getCreatedBy().getFullName()))
                 .toList();
     }
 
