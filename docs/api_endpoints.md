@@ -1,6 +1,6 @@
 # Smart Task Manager - API Endpoints Reference
 
-**Base URL:** `http://localhost:8080` (local) | `https://render-domain.com` (production)
+**Base URL:** `http://localhost:8080` (local) | `https://prm-smart-task-api.onrender.com` (production)
 
 **Authentication:** All endpoints (except Auth) require `Authorization: Bearer {accessToken}` header
 
