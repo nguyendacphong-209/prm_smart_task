@@ -11,6 +11,30 @@ class TaskRemoteDataSource {
 
   final Dio _dio;
 
+  static final RegExp _uuidRegExp = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+  );
+
+  List<String> _normalizeUuidList(List<String>? values) {
+    if (values == null) {
+      return const [];
+    }
+
+    final unique = <String>{};
+    for (final raw in values) {
+      final normalized = raw.trim();
+      if (normalized.isEmpty) {
+        continue;
+      }
+
+      if (_uuidRegExp.hasMatch(normalized)) {
+        unique.add(normalized);
+      }
+    }
+
+    return unique.toList()..sort();
+  }
+
   Future<Options?> _authOptions() async {
     final token = await AuthStorage.getAccessToken();
     if (token == null || token.trim().isEmpty) {
@@ -82,6 +106,15 @@ class TaskRemoteDataSource {
     List<String> labelIds = const [],
   }) async {
     try {
+      final normalizedAssigneeIds = _normalizeUuidList(assigneeIds);
+      final normalizedLabelIds = _normalizeUuidList(labelIds);
+
+      if (kDebugMode) {
+        debugPrint(
+          '[TASK_CREATE] projectId=$projectId assignees=${normalizedAssigneeIds.length} labels=${normalizedLabelIds.length}',
+        );
+      }
+
       final response = await _dio.post(
         ApiConstants.projectTasks(projectId),
         data: {
@@ -90,8 +123,8 @@ class TaskRemoteDataSource {
           'priority': priority,
           'deadline': deadline?.toIso8601String(),
           'statusId': statusId,
-          'assigneeIds': assigneeIds,
-          'labelIds': labelIds,
+          'assigneeIds': normalizedAssigneeIds,
+          'labelIds': normalizedLabelIds,
         },
         options: await _authOptions(),
       );
@@ -113,17 +146,23 @@ class TaskRemoteDataSource {
     List<String>? labelIds,
   }) async {
     try {
+      final normalizedAssigneeIds =
+          assigneeIds == null ? null : _normalizeUuidList(assigneeIds);
+      final normalizedLabelIds = labelIds == null ? null : _normalizeUuidList(labelIds);
+
       final payload = <String, dynamic>{
         'title': title,
         'description': description,
         'priority': priority,
         'deadline': deadline?.toIso8601String(),
-        'assigneeIds': assigneeIds,
-        'labelIds': labelIds,
+        'assigneeIds': normalizedAssigneeIds,
+        'labelIds': normalizedLabelIds,
       }..removeWhere((_, value) => value == null);
 
       if (kDebugMode) {
-        debugPrint('[TASK_UPDATE] taskId=$taskId payload=$payload');
+        debugPrint(
+          '[TASK_UPDATE] taskId=$taskId assignees=${normalizedAssigneeIds?.length ?? 'unchanged'} labels=${normalizedLabelIds?.length ?? 'unchanged'} payload=$payload',
+        );
       }
 
       final response = await _dio.put(

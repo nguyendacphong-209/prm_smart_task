@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
@@ -394,6 +395,22 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                                 !nextLabelIds.containsAll(currentLabelIds)
                               ? labelIds
                               : null;
+
+                      final updateFormBody = <String, dynamic>{
+                        'title': changedTitle,
+                        'description': changedDescription,
+                        'priority': changedPriority,
+                        'deadline': changedDeadline?.toIso8601String(),
+                        'statusId': changedStatusId,
+                        'assigneeIds': changedAssigneeIds,
+                        'labelIds': changedLabelIds,
+                      }..removeWhere((_, value) => value == null);
+
+                      if (kDebugMode) {
+                        debugPrint(
+                          '[TASK_UPDATE_CLICK] source=task_list taskId=${task.id} body=$updateFormBody',
+                        );
+                      }
 
                       success = await ref.read(taskControllerProvider.notifier).updateTask(
                             taskId: task.id,

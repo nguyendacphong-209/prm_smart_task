@@ -62,4 +62,9 @@ class ApiConstants {
 
     static String notificationMarkRead(String notificationId) =>
         '/api/notifications/$notificationId/read';
+
+    static const String dashboardMe = '/api/dashboard/me';
+
+    static String dashboardProject(String projectId) =>
+        '/api/dashboard/projects/$projectId';
 }

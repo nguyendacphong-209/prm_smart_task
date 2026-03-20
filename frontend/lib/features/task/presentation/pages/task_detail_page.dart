@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/collaboration/application/providers/collaboration_providers.dart';
 import 'package:prm_smart_task/features/collaboration/domain/entities/task_attachment.dart';
@@ -514,6 +515,24 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                     _showSnack('Không có thay đổi để cập nhật');
                     return;
                   }
+
+                    final updateFormBody = <String, dynamic>{
+                      'title': changedTitle,
+                      'description': changedDescription,
+                      'priority': changedPriority,
+                      'deadline': changedDeadline?.toIso8601String(),
+                      'statusId': changedStatusId,
+                      'assigneeIds': changedAssigneeIds == null
+                          ? null
+                          : nextAssigneeIds.toList(),
+                      'labelIds': changedLabelIds,
+                    }..removeWhere((_, value) => value == null);
+
+                    if (kDebugMode) {
+                      debugPrint(
+                        '[TASK_UPDATE_CLICK] source=task_detail taskId=${task.id} body=$updateFormBody',
+                      );
+                    }
 
                     Navigator.of(context).pop();
 

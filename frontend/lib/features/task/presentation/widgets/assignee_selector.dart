@@ -26,6 +26,16 @@ class _AssigneeSelectorState extends State<AssigneeSelector> {
     _selectedIds = Set.from(widget.selectedAssigneeIds);
   }
 
+  @override
+  void didUpdateWidget(covariant AssigneeSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.selectedAssigneeIds.length != widget.selectedAssigneeIds.length ||
+        !oldWidget.selectedAssigneeIds.containsAll(widget.selectedAssigneeIds)) {
+      _selectedIds = Set.from(widget.selectedAssigneeIds);
+    }
+  }
+
   void _showAssigneePopup() {
     showDialog<void>(
       context: context,
@@ -70,7 +80,7 @@ class _AssigneeSelectorState extends State<AssigneeSelector> {
                 ),
                 FilledButton(
                   onPressed: () {
-                    widget.onChanged(_selectedIds);
+                    widget.onChanged(Set<String>.from(_selectedIds));
                     Navigator.of(context).pop();
                   },
                   child: const Text('Lưu'),
@@ -131,7 +141,7 @@ class _AssigneeSelectorState extends State<AssigneeSelector> {
                     onDeleted: () {
                       setState(() {
                         _selectedIds.remove(member.userId);
-                        widget.onChanged(_selectedIds);
+                        widget.onChanged(Set<String>.from(_selectedIds));
                       });
                     },
                   ),

@@ -66,9 +66,12 @@ Người muốn quản lý công việc cá nhân
 Xem hồ sơ cá nhân
 Cập nhật hồ sơ cá nhân
 Đổi mật khẩu
+Quên mật khẩu
 2. Workspace Management
 Tạo workspace
 Mời thành viên vào workspace
+Sửa workspace
+Xoá workspace
 Quản lý danh sách thành viên
 3. Project Management
 Tạo project
@@ -89,6 +92,7 @@ Drag & drop task giữa các trạng thái
 Tạo trạng thái task mới
 6. Collaboration
 Comment trong task
+Xem comment trong task
 Mention thành viên
 Upload file đính kèm
 7. Notification
