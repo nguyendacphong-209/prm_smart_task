@@ -151,3 +151,5 @@ Nếu gặp vấn đề:
 1. Kiểm tra Backend đang hoạt động: Mở web browser vào API endpoint
 2. Chạy `flutter doctor` để kiểm tra environment
 3. Xem logs: `flutter run -v`
+
+Thông tin hỗ trợ : dacphong2092003@gmail.com (Liên hệ tôi)

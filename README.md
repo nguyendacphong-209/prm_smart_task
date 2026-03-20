@@ -163,3 +163,5 @@ cd backend/prm_smart_task && java -jar build/libs/prm_smart_task-*.jar
 
 ### 🧪 Testing API Endpoints
 We will follow prm_smart_task/test_api to testing api
+
+Email support: dacphong2092003@gmail.com (Contact me)
