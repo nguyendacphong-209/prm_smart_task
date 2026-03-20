@@ -176,6 +176,7 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: ErrorStateView(
                           title: 'Không thể tải workspace',
                           message: state.errorMessage!,
@@ -192,6 +193,7 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                       children: [
                         GlassCard(
+                          style: GlassCardStyle.spotlight,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -210,6 +212,7 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
                         const SizedBox(height: 14),
                         if (state.workspaces.isEmpty)
                           GlassCard(
+                            style: GlassCardStyle.liquid,
                             child: EmptyStateView(
                               icon: Icons.folder_open_rounded,
                               title: 'Chưa có workspace',
@@ -223,6 +226,7 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
                             (workspace) => Padding(
                               padding: const EdgeInsets.only(bottom: 10),
                               child: GlassCard(
+                                style: GlassCardStyle.liquid,
                                 padding: const EdgeInsets.all(14),
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(16),
@@ -249,12 +253,25 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
                                                   .textTheme
                                                   .titleMedium,
                                             ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Vai trò: ${_roleLabel(workspace.myRole)}',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall,
+                                            const SizedBox(height: 6),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(999),
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary
+                                                    .withValues(alpha: 0.12),
+                                              ),
+                                              child: Text(
+                                                _roleLabel(workspace.myRole),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelMedium,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -287,7 +304,13 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
                                           },
                                         )
                                       else
-                                        const Icon(Icons.chevron_right_rounded),
+                                        Icon(
+                                          Icons.chevron_right_rounded,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.62),
+                                        ),
                                     ],
                                   ),
                                 ),

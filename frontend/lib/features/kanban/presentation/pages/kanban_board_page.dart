@@ -215,6 +215,7 @@ class _KanbanBoardPageState extends ConsumerState<KanbanBoardPage> {
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: ErrorStateView(
                           title: 'Không thể tải Kanban',
                           message: state.errorMessage!,
@@ -227,6 +228,7 @@ class _KanbanBoardPageState extends ConsumerState<KanbanBoardPage> {
                       ? Padding(
                           padding: const EdgeInsets.all(16),
                           child: GlassCard(
+                            style: GlassCardStyle.liquid,
                             child: EmptyStateView(
                               icon: Icons.view_kanban_outlined,
                               title: 'Chưa có cột Kanban',
@@ -256,6 +258,7 @@ class _KanbanBoardPageState extends ConsumerState<KanbanBoardPage> {
                                   child: Padding(
                                     padding: const EdgeInsets.only(right: 12),
                                     child: GlassCard(
+                                      style: GlassCardStyle.liquid,
                                       child: DragTarget<KanbanTaskCard>(
                                         onWillAcceptWithDetails: (details) {
                                           final incoming = details.data;
@@ -273,6 +276,14 @@ class _KanbanBoardPageState extends ConsumerState<KanbanBoardPage> {
                                             padding: const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
                                               borderRadius: BorderRadius.circular(16),
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [
+                                                  statusColor.withValues(alpha: 0.18),
+                                                  statusColor.withValues(alpha: 0.07),
+                                                ],
+                                              ),
                                               border: Border.all(
                                                 color: statusColor.withValues(
                                                   alpha: isHovering ? 0.66 : 0.28,
@@ -429,18 +440,17 @@ class _KanbanTaskCardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassCard(
+      borderRadius: 14,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.72),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             task.title,
             style: Theme.of(context).textTheme.titleSmall,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 8),
           StatusChip(
@@ -448,17 +458,29 @@ class _KanbanTaskCardView extends StatelessWidget {
             type: task.priority,
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.event_outlined, size: 14),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  formatDate(task.deadline),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.7),
               ),
-            ],
+              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.13),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.event_outlined, size: 14),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    formatDate(task.deadline),
+                    style: Theme.of(context).textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -506,6 +506,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
           IconButton(
             onPressed: state.isSubmitting ? null : () => _showTaskDialog(),
             icon: const Icon(Icons.add_task_rounded),
+            tooltip: 'Tạo task',
           ),
         ],
       ),
@@ -524,6 +525,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: ErrorStateView(
                           title: 'Không thể tải task',
                           message: state.errorMessage!,
@@ -536,6 +538,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                       children: [
                         GlassCard(
+                          style: GlassCardStyle.spotlight,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -554,6 +557,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                         const SizedBox(height: 12),
                         if (state.tasks.isEmpty)
                           GlassCard(
+                            style: GlassCardStyle.liquid,
                             child: EmptyStateView(
                               icon: Icons.task_outlined,
                               title: 'Chưa có task',
@@ -567,6 +571,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                             (task) => Padding(
                               padding: const EdgeInsets.only(bottom: 10),
                               child: GlassCard(
+                                style: GlassCardStyle.liquid,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(16),
                                   onTap: () => context.push(
@@ -610,7 +615,11 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                                       ),
                                       if ((task.description ?? '').trim().isNotEmpty) ...[
                                         const SizedBox(height: 6),
-                                        Text(task.description!.trim()),
+                                        Text(
+                                          task.description!.trim(),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ],
                                       const SizedBox(height: 10),
                                       Wrap(
@@ -627,17 +636,38 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                                               vertical: 5,
                                             ),
                                             decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                                colors: [
+                                                  Theme.of(context)
+                                                      .colorScheme
+                                                      .secondary
+                                                      .withValues(alpha: 0.20),
+                                                  Theme.of(context)
+                                                      .colorScheme
+                                                      .primary
+                                                      .withValues(alpha: 0.10),
+                                                ],
+                                              ),
                                               borderRadius: BorderRadius.circular(999),
                                               border: Border.all(
                                                 color: Theme.of(context)
                                                     .colorScheme
-                                                    .outline,
+                                                    .outline
+                                                    .withValues(alpha: 0.7),
                                               ),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                const Icon(Icons.event_rounded, size: 14),
+                                                Icon(
+                                                  Icons.event_rounded,
+                                                  size: 14,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .secondary,
+                                                ),
                                                 const SizedBox(width: 4),
                                                 Text(
                                                   _formatDate(task.deadline),

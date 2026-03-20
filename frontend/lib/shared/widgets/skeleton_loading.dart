@@ -95,7 +95,7 @@ class TabSkeletonView extends StatelessWidget {
           ],
         ),
       ),
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, index) => const SizedBox(height: 12),
       itemCount: cardCount,
     );
   }

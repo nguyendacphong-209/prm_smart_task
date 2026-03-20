@@ -88,6 +88,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: ErrorStateView(
                           title: 'Không thể tải notifications',
                           message: state.errorMessage!,
@@ -100,6 +101,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                   children: [
                     GlassCard(
+                      style: GlassCardStyle.spotlight,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -121,7 +123,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .primary
-                                      .withValues(alpha: 0.16),
+                                      .withValues(alpha: 0.12),
                                 ),
                                 child: Text('Unread: ${state.unreadCount}'),
                               ),
@@ -162,6 +164,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
                     const SizedBox(height: 14),
                     if (state.notifications.isEmpty)
                       GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: const EmptyStateView(
                           icon: Icons.notifications_active_outlined,
                           title: 'Chưa có thông báo mới',
@@ -174,6 +177,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
                         (notification) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: GlassCard(
+                            style: GlassCardStyle.liquid,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
                               onTap: notification.isRead

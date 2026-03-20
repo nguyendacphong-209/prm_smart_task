@@ -399,6 +399,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: ErrorStateView(
                           title: 'Không thể tải workspace',
                           message: state.errorMessage!,
@@ -411,6 +412,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                       children: [
                         GlassCard(
+                          style: GlassCardStyle.spotlight,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -420,8 +422,26 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Vai trò của bạn: ${_memberRoleLabel(workspace?.myRole ?? 'member')}',
+                                'Vai trò của bạn',
                                 style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(999),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withValues(alpha: 0.12),
+                                ),
+                                child: Text(
+                                  _memberRoleLabel(workspace?.myRole ?? 'member'),
+                                  style: Theme.of(context).textTheme.labelMedium,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               SizedBox(
@@ -439,6 +459,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                         ),
                         const SizedBox(height: 14),
                         GlassCard(
+                          style: GlassCardStyle.liquid,
                           child: Row(
                             children: [
                               Expanded(
@@ -458,6 +479,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                         const SizedBox(height: 12),
                         if (state.members.isEmpty)
                           GlassCard(
+                            style: GlassCardStyle.liquid,
                             child: EmptyStateView(
                               icon: Icons.group_off_rounded,
                               title: 'Chưa có thành viên',
@@ -471,6 +493,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                             (member) => Padding(
                               padding: const EdgeInsets.only(bottom: 10),
                               child: GlassCard(
+                                style: GlassCardStyle.liquid,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 14,
                                   vertical: 12,
@@ -479,6 +502,12 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                                   children: [
                                     CircleAvatar(
                                       radius: 20,
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.16),
+                                      foregroundColor:
+                                          Theme.of(context).colorScheme.primary,
                                       child: Text(
                                         (member.fullName.isNotEmpty
                                                 ? member.fullName
@@ -518,7 +547,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                                         color: Theme.of(context)
                                             .colorScheme
                                             .primary
-                                            .withValues(alpha: 0.16),
+                                          .withValues(alpha: 0.12),
                                       ),
                                       child: Text(
                                         _memberRoleLabel(member.role),

@@ -37,6 +37,7 @@ class AuthScreenContainer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GlassCard(
+                  style: GlassCardStyle.spotlight,
                   padding: const EdgeInsets.all(18),
                   child: Row(
                     children: [
@@ -70,6 +71,7 @@ class AuthScreenContainer extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 GlassCard(
+                  style: GlassCardStyle.liquid,
                   child: child,
                 ),
               ],

@@ -5,6 +5,7 @@ import 'package:prm_smart_task/features/dashboard/presentation/pages/dashboard_p
 import 'package:prm_smart_task/features/notification/application/providers/notification_providers.dart';
 import 'package:prm_smart_task/features/notification/presentation/pages/notification_page.dart';
 import 'package:prm_smart_task/features/workspace/presentation/pages/workspace_list_page.dart';
+import 'package:prm_smart_task/shared/widgets/glass_card.dart';
 import 'package:prm_smart_task/shared/widgets/notification_badge.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
@@ -17,25 +18,30 @@ class HomeShell extends ConsumerStatefulWidget {
 class _HomeShellState extends ConsumerState<HomeShell> {
   int _selectedIndex = 0;
 
-  final List<({String label, IconData icon, Widget page})> _tabs = [
+  final List<({String label, IconData icon, IconData selectedIcon, Widget page})>
+      _tabs = [
     (
       label: 'Dashboard',
-      icon: Icons.dashboard_rounded,
+      icon: Icons.pie_chart,
+      selectedIcon: Icons.pie_chart,
       page: const DashboardPage(),
     ),
     (
       label: 'Workspaces',
-      icon: Icons.folder_rounded,
+      icon: Icons.folder_outlined,
+      selectedIcon: Icons.folder,
       page: const WorkspaceListPage(),
     ),
     (
       label: 'Notifications',
-      icon: Icons.notifications_rounded,
+      icon: Icons.notifications_outlined,
+      selectedIcon: Icons.notifications,
       page: const NotificationPage(),
     ),
     (
       label: 'Profile',
-      icon: Icons.person_rounded,
+      icon: Icons.person_outline,
+      selectedIcon: Icons.person,
       page: const ProfilePage(),
     ),
   ];
@@ -63,32 +69,52 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     return Scaffold(
       body: _tabs[_selectedIndex].page,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onTabSelected,
-        backgroundColor: colorScheme.surface.withValues(alpha: 0.88),
-        indicatorColor: colorScheme.primary.withValues(alpha: 0.20),
-        destinations: _tabs
-            .asMap()
-            .entries
-            .map(
-              (entry) {
-                final index = entry.key;
-                final tab = entry.value;
-                final isNotificationTab = index == 2;
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+        child: GlassCard(
+          style: GlassCardStyle.liquid,
+          borderRadius: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: NavigationBar(
+            height: 70,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onTabSelected,
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            indicatorShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+            indicatorColor: colorScheme.primary.withValues(alpha: 0.22),
+            destinations: _tabs
+                .asMap()
+                .entries
+                .map(
+                  (entry) {
+                    final index = entry.key;
+                    final tab = entry.value;
+                    final isNotificationTab = index == 2;
 
-                return NavigationDestination(
-                  icon: isNotificationTab
-                      ? NotificationBadge(
-                          count: unreadCount,
-                          child: Icon(tab.icon),
-                        )
-                      : Icon(tab.icon),
-                  label: tab.label,
-                );
-              },
-            )
-            .toList(),
+                    return NavigationDestination(
+                      icon: isNotificationTab
+                          ? NotificationBadge(
+                              count: unreadCount,
+                              child: Icon(tab.icon),
+                            )
+                          : Icon(tab.icon),
+                      selectedIcon: isNotificationTab
+                          ? NotificationBadge(
+                              count: unreadCount,
+                              child: Icon(tab.selectedIcon),
+                            )
+                          : Icon(tab.selectedIcon),
+                      label: tab.label,
+                    );
+                  },
+                )
+                .toList(),
+          ),
+        ),
       ),
     );
   }

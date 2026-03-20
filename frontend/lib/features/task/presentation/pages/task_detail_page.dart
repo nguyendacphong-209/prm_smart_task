@@ -641,6 +641,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: ErrorStateView(
                           title: 'Không thể tải task',
                           message: state.errorMessage!,
@@ -658,6 +659,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                       ? Padding(
                           padding: const EdgeInsets.all(16),
                           child: GlassCard(
+                            style: GlassCardStyle.liquid,
                             child: const EmptyStateView(
                               icon: Icons.search_off_rounded,
                               title: 'Không tìm thấy task',
@@ -669,6 +671,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                           children: [
                             GlassCard(
+                              style: GlassCardStyle.spotlight,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -688,28 +691,85 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                                         : 'Không có mô tả',
                                   ),
                                   const SizedBox(height: 14),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.event_outlined, size: 16),
-                                      const SizedBox(width: 6),
-                                      Expanded(child: Text(_formatDate(task.deadline))),
-                                    ],
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .secondary
+                                              .withValues(alpha: 0.16),
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .surface
+                                              .withValues(alpha: 0.04),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.outline.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.event_outlined, size: 16),
+                                        const SizedBox(width: 6),
+                                        Expanded(child: Text(_formatDate(task.deadline))),
+                                      ],
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.view_column_outlined, size: 16),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(_statusName(task.statusId)),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withValues(alpha: 0.14),
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .surface
+                                              .withValues(alpha: 0.06),
+                                        ],
                                       ),
-                                    ],
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.outline.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.view_column_outlined, size: 16),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(_statusName(task.statusId)),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                             const SizedBox(height: 12),
                             GlassCard(
+                              style: GlassCardStyle.liquid,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -782,6 +842,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                             ),
                             const SizedBox(height: 12),
                             GlassCard(
+                              style: GlassCardStyle.liquid,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -879,6 +940,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                             ),
                             const SizedBox(height: 12),
                             GlassCard(
+                              style: GlassCardStyle.liquid,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -908,6 +970,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                             ),
                             const SizedBox(height: 12),
                             GlassCard(
+                              style: GlassCardStyle.liquid,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

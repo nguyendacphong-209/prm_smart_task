@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/dashboard/application/providers/dashboard_providers.dart';
@@ -17,10 +18,44 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
+  List<Color> _chartPalette(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return [
+      colorScheme.primary,
+      colorScheme.secondary,
+      colorScheme.tertiary,
+      Color.alphaBlend(
+        colorScheme.primary.withValues(alpha: isDark ? 0.26 : 0.20),
+        colorScheme.surface,
+      ),
+      Color.alphaBlend(
+        colorScheme.secondary.withValues(alpha: isDark ? 0.24 : 0.18),
+        colorScheme.surface,
+      ),
+    ];
+  }
+
+  Color _successColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Color.alphaBlend(
+      colorScheme.secondary.withValues(alpha: 0.55),
+      colorScheme.primary.withValues(alpha: 0.45),
+    );
+  }
+
   List<MapEntry<String, int>> _sortedEntries(Map<String, int> values) {
     final entries = values.entries.toList();
     entries.sort((a, b) => b.value.compareTo(a.value));
     return entries;
+  }
+
+  String _compactNumber(int value) {
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
+    }
+    return value.toString();
   }
 
   Widget _metricTile(
@@ -28,29 +63,95 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     required String title,
     required String value,
     required IconData icon,
+    required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      constraints: const BoxConstraints(minHeight: 72),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.34),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withValues(alpha: 0.14),
+            Theme.of(context).colorScheme.surface.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.70),
+        ),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.20),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(title, style: Theme.of(context).textTheme.labelMedium),
                 const SizedBox(height: 2),
-                Text(value, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _distributionChart(BuildContext context, List<MapEntry<String, int>> entries) {
+    final sum = entries.fold<int>(0, (acc, e) => acc + e.value);
+    final chartPalette = _chartPalette(context);
+    if (sum == 0) {
+      return Container(
+        height: 160,
+        alignment: Alignment.center,
+        child: Text(
+          'Chưa có dữ liệu',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 172,
+      child: PieChart(
+        PieChartData(
+          centerSpaceRadius: 32,
+          sectionsSpace: 3,
+          pieTouchData: PieTouchData(enabled: false),
+          sections: entries.asMap().entries.map((entry) {
+            final index = entry.key;
+            final value = entry.value.value;
+            final color = chartPalette[index % chartPalette.length];
+            return PieChartSectionData(
+              value: value.toDouble(),
+              color: color,
+              radius: 56,
+              title: '${((value / sum) * 100).round()}%',
+              titleStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -61,9 +162,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     required Map<String, int> values,
   }) {
     final entries = _sortedEntries(values);
+    final chartPalette = _chartPalette(context);
 
     if (entries.isEmpty) {
       return GlassCard(
+        style: GlassCardStyle.liquid,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -76,29 +179,44 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
 
     return GlassCard(
+      style: GlassCardStyle.liquid,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 10),
+          _distributionChart(context, entries),
           const SizedBox(height: 8),
-          ...entries.map(
-            (entry) => Padding(
+          ...entries.asMap().entries.map((item) {
+            final index = item.key;
+            final entry = item.value;
+            final color = chartPalette[index % chartPalette.length];
+            return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  Expanded(child: Text(entry.key)),
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(entry.key, maxLines: 1, overflow: TextOverflow.ellipsis)),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
+                      color: color.withValues(alpha: 0.18),
                     ),
-                    child: Text(entry.value.toString()),
+                    child: Text(_compactNumber(entry.value)),
                   ),
                 ],
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -106,6 +224,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   Widget _buildUserSummary(BuildContext context, UserDashboard dashboard) {
     return GlassCard(
+      style: GlassCardStyle.spotlight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -126,7 +245,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   context,
                   title: 'Được giao',
                   value: dashboard.totalAssignedTasks.toString(),
-                  icon: Icons.assignment_ind_outlined,
+                  icon: Icons.person_add_alt_1,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               SizedBox(
@@ -135,7 +255,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   context,
                   title: 'Hoàn thành',
                   value: dashboard.completedTasks.toString(),
-                  icon: Icons.task_alt_rounded,
+                  icon: Icons.check_circle_outline,
+                  color: _successColor(context),
                 ),
               ),
               SizedBox(
@@ -144,7 +265,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   context,
                   title: 'Quá hạn',
                   value: dashboard.overdueTasks.toString(),
-                  icon: Icons.warning_amber_rounded,
+                  icon: Icons.warning_amber_outlined,
+                  color: Theme.of(context).colorScheme.error,
                 ),
               ),
               SizedBox(
@@ -153,7 +275,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   context,
                   title: 'Sắp đến hạn',
                   value: dashboard.dueSoonTasks.toString(),
-                  icon: Icons.schedule_rounded,
+                  icon: Icons.schedule_outlined,
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
               ),
             ],
@@ -167,6 +290,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final completion = dashboard.completionPercentage.clamp(0, 100);
 
     return GlassCard(
+      style: GlassCardStyle.liquid,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -190,7 +314,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   context,
                   title: 'Tổng task',
                   value: dashboard.totalTasks.toString(),
-                  icon: Icons.list_alt_rounded,
+                  icon: Icons.list,
+                  color: Theme.of(context).colorScheme.tertiary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -199,7 +324,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   context,
                   title: 'Đã xong',
                   value: dashboard.completedTasks.toString(),
-                  icon: Icons.check_circle_outline_rounded,
+                  icon: Icons.verified_outlined,
+                  color: _successColor(context),
                 ),
               ),
             ],
@@ -281,6 +407,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     const SizedBox(height: 14),
                     if (state.userDashboard == null)
                       GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: const EmptyStateView(
                           icon: Icons.insights_outlined,
                           title: 'Chưa có dữ liệu cá nhân',
@@ -302,6 +429,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ],
                     const SizedBox(height: 14),
                     GlassCard(
+                      style: GlassCardStyle.spotlight,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

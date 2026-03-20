@@ -196,6 +196,7 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: GlassCard(
+                        style: GlassCardStyle.liquid,
                         child: ErrorStateView(
                           title: 'Không thể tải project',
                           message: state.errorMessage!,
@@ -208,6 +209,7 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                       children: [
                         GlassCard(
+                          style: GlassCardStyle.spotlight,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -226,6 +228,7 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
                         const SizedBox(height: 12),
                         if (state.projects.isEmpty)
                           GlassCard(
+                            style: GlassCardStyle.liquid,
                             child: EmptyStateView(
                               icon: Icons.layers_clear_outlined,
                               title: 'Chưa có project',
@@ -239,6 +242,7 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
                             (project) => Padding(
                               padding: const EdgeInsets.only(bottom: 10),
                               child: GlassCard(
+                                style: GlassCardStyle.liquid,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [

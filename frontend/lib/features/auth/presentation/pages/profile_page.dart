@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:prm_smart_task/core/theme/theme_mode_controller.dart';
 import 'package:prm_smart_task/features/auth/application/providers/auth_providers.dart';
 import 'package:prm_smart_task/features/auth/presentation/widgets/auth_screen_container.dart';
+import 'package:prm_smart_task/shared/widgets/glass_card.dart';
 import 'package:prm_smart_task/shared/widgets/skeleton_loading.dart';
 
 class ProfilePage extends ConsumerWidget {
@@ -30,14 +31,8 @@ class ProfilePage extends ConsumerWidget {
             const SkeletonBox(height: 56),
             const SizedBox(height: 12),
           ],
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Theme.of(context).colorScheme.outline),
-            ),
+          GlassCard(
+            style: GlassCardStyle.liquid,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -73,14 +68,8 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Theme.of(context).colorScheme.outline),
-            ),
+          GlassCard(
+            style: GlassCardStyle.liquid,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -120,17 +109,19 @@ class ProfilePage extends ConsumerWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: FilledButton.tonal(
+            child: FilledButton.tonalIcon(
               onPressed: () => context.push('/profile/edit'),
-              child: const Text('Cập nhật hồ sơ cá nhân'),
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Cập nhật hồ sơ cá nhân'),
             ),
           ),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            child: FilledButton.tonal(
+            child: FilledButton.tonalIcon(
               onPressed: () => context.push('/profile/change-password'),
-              child: const Text('Đổi mật khẩu'),
+              icon: const Icon(Icons.lock_reset_rounded),
+              label: const Text('Đổi mật khẩu'),
             ),
           ),
           const SizedBox(height: 10),
@@ -153,17 +144,14 @@ class ProfilePage extends ConsumerWidget {
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Theme.of(context).colorScheme.onError,
-              ),
+            child: FilledButton.tonalIcon(
               onPressed: () async {
                 await ref.read(authControllerProvider.notifier).logout();
                 if (!context.mounted) return;
                 context.go('/login');
               },
-              child: const Text('Đăng xuất'),
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text('Đăng xuất'),
             ),
           ),
         ],

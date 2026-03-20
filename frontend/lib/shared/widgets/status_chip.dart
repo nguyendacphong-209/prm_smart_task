@@ -14,42 +14,51 @@ class StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    Color background;
+    Color accent;
     IconData icon;
 
     switch (type.toLowerCase()) {
       case 'high':
-        background = colorScheme.error.withValues(alpha: 0.18);
-        icon = Icons.priority_high_rounded;
+        accent = colorScheme.error;
+        icon = Icons.warning_rounded;
         break;
       case 'medium':
-        background = colorScheme.primary.withValues(alpha: 0.18);
+        accent = colorScheme.primary;
         icon = Icons.drag_handle_rounded;
         break;
       case 'low':
-        background = colorScheme.tertiary.withValues(alpha: 0.18);
-        icon = Icons.south_rounded;
+        accent = colorScheme.tertiary;
+        icon = Icons.arrow_downward_rounded;
         break;
       default:
-        background = colorScheme.surface.withValues(alpha: 0.30);
-        icon = Icons.info_outline_rounded;
+        accent = colorScheme.onSurface;
+        icon = Icons.info_outlined;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: background,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: 0.22),
+            accent.withValues(alpha: 0.10),
+          ],
+        ),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colorScheme.outline),
+        border: Border.all(color: accent.withValues(alpha: 0.34)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14),
+          Icon(icon, size: 14, color: accent),
           const SizedBox(width: 4),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelMedium,
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),

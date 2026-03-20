@@ -67,6 +67,7 @@ class _CreateWorkspacePageState extends ConsumerState<CreateWorkspacePage> {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
             children: [
               GlassCard(
+                style: GlassCardStyle.spotlight,
                 child: Form(
                   key: _formKey,
                   child: Column(
