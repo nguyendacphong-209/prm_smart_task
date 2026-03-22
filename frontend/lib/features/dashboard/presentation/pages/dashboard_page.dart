@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/dashboard/application/providers/dashboard_providers.dart';
 import 'package:prm_smart_task/features/dashboard/domain/entities/project_dashboard.dart';
@@ -18,6 +19,16 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
+  ProviderSubscription<dynamic>? _dashboardSubscription;
+
+  void _showSnack(String message) {
+    final messenger = appScaffoldMessengerKey.currentState;
+    if (messenger == null) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   List<Color> _chartPalette(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -338,23 +349,31 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   void initState() {
     super.initState();
+
+    _dashboardSubscription = ref.listenManual(
+      dashboardControllerProvider,
+      (previous, next) {
+        if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
+          _showSnack(next.errorMessage!);
+        }
+      },
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(dashboardControllerProvider.notifier).loadDashboard();
     });
   }
 
   @override
+  void dispose() {
+    _dashboardSubscription?.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(dashboardControllerProvider);
     final colors = AppBackground.colors(Theme.of(context).brightness);
-
-    ref.listen(dashboardControllerProvider, (previous, next) {
-      if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
-      }
-    });
 
     return Scaffold(
       extendBodyBehindAppBar: true,

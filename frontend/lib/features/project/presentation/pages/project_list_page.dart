@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/project/application/providers/project_providers.dart';
 import 'package:prm_smart_task/features/project/domain/entities/project.dart';
@@ -19,6 +20,14 @@ class ProjectListPage extends ConsumerStatefulWidget {
 }
 
 class _ProjectListPageState extends ConsumerState<ProjectListPage> {
+  void _showSnack(String message) {
+    final messenger = appScaffoldMessengerKey.currentState;
+    if (messenger == null) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -37,109 +46,103 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
   }
 
   Future<void> _showProjectDialog({Project? project}) async {
-    final nameController = TextEditingController(text: project?.name ?? '');
-    final descriptionController = TextEditingController(
-      text: project?.description ?? '',
-    );
+    var name = project?.name ?? '';
+    var description = project?.description ?? '';
 
     await showDialog<void>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: Text(project == null ? 'Tạo project' : 'Cập nhật project'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Tên project',
-                  prefixIcon: Icon(Icons.layers_outlined),
+            title: Text(project == null ? 'Tạo project' : 'Cập nhật project'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  initialValue: name,
+                  onChanged: (value) => name = value,
+                  decoration: const InputDecoration(
+                    labelText: 'Tên project',
+                    prefixIcon: Icon(Icons.layers_outlined),
+                  ),
                 ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  initialValue: description,
+                  onChanged: (value) => description = value,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Mô tả',
+                    prefixIcon: Icon(Icons.notes_rounded),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Hủy'),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descriptionController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Mô tả',
-                  prefixIcon: Icon(Icons.notes_rounded),
-                ),
+              FilledButton(
+                onPressed: () async {
+                  final navigator = Navigator.of(dialogContext);
+
+                  final trimmedName = name.trim();
+                  final trimmedDescription = description.trim();
+
+                  if (trimmedName.isEmpty || trimmedName.length < 3) {
+                    _showSnack('Tên project tối thiểu 3 ký tự');
+                    return;
+                  }
+
+                  navigator.pop();
+
+                  bool success;
+                  if (project == null) {
+                    success = await ref.read(projectControllerProvider.notifier).createProject(
+                          workspaceId: widget.workspaceId,
+                          name: trimmedName,
+                          description: trimmedDescription.isEmpty ? null : trimmedDescription,
+                        );
+                  } else {
+                    success = await ref.read(projectControllerProvider.notifier).updateProject(
+                          projectId: project.id,
+                          name: trimmedName,
+                          description: trimmedDescription.isEmpty ? null : trimmedDescription,
+                        );
+                  }
+
+                  if (!mounted) return;
+
+                  final state = ref.read(projectControllerProvider);
+                  _showSnack(
+                    success
+                        ? (project == null
+                            ? 'Tạo project thành công'
+                            : 'Cập nhật project thành công')
+                        : (state.errorMessage ?? 'Không thể xử lý project'),
+                  );
+                },
+                child: Text(project == null ? 'Tạo' : 'Lưu'),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Hủy'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final name = nameController.text.trim();
-                final description = descriptionController.text.trim();
-
-                if (name.isEmpty || name.length < 3) {
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(content: Text('Tên project tối thiểu 3 ký tự')),
-                  );
-                  return;
-                }
-
-                Navigator.of(context).pop();
-
-                bool success;
-                if (project == null) {
-                  success = await ref.read(projectControllerProvider.notifier).createProject(
-                        workspaceId: widget.workspaceId,
-                        name: name,
-                        description: description.isEmpty ? null : description,
-                      );
-                } else {
-                  success = await ref.read(projectControllerProvider.notifier).updateProject(
-                        projectId: project.id,
-                        name: name,
-                        description: description.isEmpty ? null : description,
-                      );
-                }
-
-                if (!mounted) return;
-                final state = ref.read(projectControllerProvider);
-                ScaffoldMessenger.of(this.context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? (project == null
-                              ? 'Tạo project thành công'
-                              : 'Cập nhật project thành công')
-                          : (state.errorMessage ?? 'Không thể xử lý project'),
-                    ),
-                  ),
-                );
-              },
-              child: Text(project == null ? 'Tạo' : 'Lưu'),
-            ),
-          ],
-        );
+          );
       },
     );
-
-    nameController.dispose();
-    descriptionController.dispose();
   }
 
   Future<void> _deleteProject(Project project) async {
     final confirmed = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('Xóa project'),
             content: Text('Bạn có chắc muốn xóa project "${project.name}"?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => Navigator.of(dialogContext).pop(false),
                 child: const Text('Hủy'),
               ),
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: const Text('Xóa'),
               ),
             ],
@@ -155,12 +158,8 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
 
     if (!mounted) return;
     final state = ref.read(projectControllerProvider);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success ? 'Đã xóa project' : (state.errorMessage ?? 'Không thể xóa project'),
-        ),
-      ),
+    _showSnack(
+      success ? 'Đã xóa project' : (state.errorMessage ?? 'Không thể xóa project'),
     );
   }
 

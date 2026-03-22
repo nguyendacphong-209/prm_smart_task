@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/task/application/providers/task_providers.dart';
 import 'package:prm_smart_task/features/task/domain/entities/app_task.dart';
 import 'package:prm_smart_task/features/task/domain/entities/task_label_option.dart';
 import 'package:prm_smart_task/features/task/domain/entities/task_status_option.dart';
-import 'package:prm_smart_task/features/task/presentation/widgets/assignee_selector.dart';
+import 'package:prm_smart_task/features/task/presentation/widgets/task_form_dialog.dart';
 import 'package:prm_smart_task/features/workspace/application/providers/workspace_providers.dart';
 import 'package:prm_smart_task/features/workspace/domain/entities/workspace_member.dart';
 import 'package:prm_smart_task/shared/widgets/empty_state_view.dart';
@@ -34,10 +35,7 @@ class TaskListPage extends ConsumerStatefulWidget {
 
 class _TaskListPageState extends ConsumerState<TaskListPage> {
   void _showSnack(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    showAppSnack(message);
   }
 
   @override
@@ -59,24 +57,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     if (date == null) return 'Không deadline';
     final local = date.toLocal();
     return '${local.day.toString().padLeft(2, '0')}/${local.month.toString().padLeft(2, '0')}/${local.year} ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-  }
-
-  Color _parseLabelColor(String? hexColor, Color fallbackColor) {
-    if (hexColor == null || hexColor.isEmpty) return fallbackColor;
-
-    var normalized = hexColor.trim().replaceFirst('#', '');
-    if (normalized.length == 6) {
-      normalized = 'FF$normalized';
-    }
-
-    if (normalized.length != 8) {
-      return fallbackColor;
-    }
-
-    final value = int.tryParse(normalized, radix: 16);
-    if (value == null) return fallbackColor;
-
-    return Color(value);
   }
 
   bool _isValidUuid(String value) {
@@ -111,355 +91,134 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
       return;
     }
 
-    final titleController = TextEditingController(text: task?.title ?? '');
-    final descriptionController = TextEditingController(
-      text: task?.description ?? '',
-    );
-
-    String priority = (task?.priority ?? 'medium').toLowerCase();
-    DateTime? selectedDeadline = task?.deadline;
-    String? selectedStatusId = task?.statusId;
-
-    if (selectedStatusId == null ||
-        !statusOptions.any((option) => option.id == selectedStatusId)) {
-      selectedStatusId = statusOptions.first.id;
+    String initialStatusId = task?.statusId ?? statusOptions.first.id;
+    if (!statusOptions.any((option) => option.id == initialStatusId)) {
+      initialStatusId = statusOptions.first.id;
     }
 
-    final selectedAssigneeIds = <String>{...task?.assigneeIds ?? const <String>[]};
-    selectedAssigneeIds.removeWhere(
-      (id) => !assigneeOptions.any((option) => option.userId == id),
-    );
-    final selectedLabelIds = <String>{...task?.labelIds ?? const <String>[]};
-    selectedLabelIds.removeWhere(
-      (id) => !labelOptions.any((option) => option.id == id),
-    );
+    final initialAssigneeIds = <String>{...task?.assigneeIds ?? const <String>[]}
+      ..removeWhere((id) => !assigneeOptions.any((option) => option.userId == id));
+    final initialLabelIds = <String>{...task?.labelIds ?? const <String>[]}
+      ..removeWhere((id) => !labelOptions.any((option) => option.id == id));
 
     if (!mounted) return;
 
-    await showDialog<void>(
+    final result = await showDialog<TaskFormResult>(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: Text(task == null ? 'Tạo task' : 'Cập nhật task'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tiêu đề',
-                        prefixIcon: Icon(Icons.task_alt_rounded),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: descriptionController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Mô tả',
-                        prefixIcon: Icon(Icons.notes_rounded),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: priority,
-                      decoration: const InputDecoration(
-                        labelText: 'Độ ưu tiên',
-                        prefixIcon: Icon(Icons.flag_outlined),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'high', child: Text('High')),
-                        DropdownMenuItem(value: 'medium', child: Text('Medium')),
-                        DropdownMenuItem(value: 'low', child: Text('Low')),
-                      ],
-                      onChanged: (value) {
-                        setStateDialog(() {
-                          priority = value ?? 'medium';
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedStatusId,
-                      decoration: const InputDecoration(
-                        labelText: 'Task status',
-                        prefixIcon: Icon(Icons.view_column_outlined),
-                      ),
-                      items: statusOptions
-                          .map(
-                            (option) => DropdownMenuItem<String>(
-                              value: option.id,
-                              child: Text(option.name),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setStateDialog(() {
-                          selectedStatusId = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    if (assigneeOptions.isEmpty)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Workspace chưa có assignee để chọn',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                      )
-                    else
-                      AssigneeSelector(
-                        assigneeOptions: assigneeOptions,
-                        selectedAssigneeIds: selectedAssigneeIds,
-                        onChanged: (selected) {
-                          setStateDialog(() {
-                            selectedAssigneeIds.clear();
-                            selectedAssigneeIds.addAll(selected);
-                          });
-                        },
-                      ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Labels',
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (labelOptions.isEmpty)
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('Chưa có label khả dụng trong project'),
-                      )
-                    else
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: labelOptions
-                            .map(
-                              (label) => FilterChip(
-                                avatar: Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: _parseLabelColor(
-                                      label.color,
-                                      Theme.of(context).colorScheme.primary,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                label: Text(label.name),
-                                selected: selectedLabelIds.contains(label.id),
-                                onSelected: (selected) {
-                                  setStateDialog(() {
-                                    if (selected) {
-                                      selectedLabelIds.add(label.id);
-                                    } else {
-                                      selectedLabelIds.remove(label.id);
-                                    }
-                                  });
-                                },
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            selectedDeadline == null
-                                ? 'Không deadline'
-                                : _formatDate(selectedDeadline),
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: selectedDeadline ?? DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2100),
-                            );
-                            if (date == null) return;
-
-                            if (!context.mounted) return;
-                            final time = await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.fromDateTime(
-                                selectedDeadline ?? DateTime.now(),
-                              ),
-                            );
-                            if (time == null) return;
-
-                            setStateDialog(() {
-                              selectedDeadline = DateTime(
-                                date.year,
-                                date.month,
-                                date.day,
-                                time.hour,
-                                time.minute,
-                              );
-                            });
-                          },
-                          icon: const Icon(Icons.event_outlined),
-                          label: const Text('Chọn deadline'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Hủy'),
-                ),
-                FilledButton(
-                  onPressed: () async {
-                    final title = titleController.text.trim();
-                    if (title.isEmpty || title.length < 3) {
-                      _showSnack('Tiêu đề tối thiểu 3 ký tự');
-                      return;
-                    }
-
-                    Navigator.of(context).pop();
-
-                    final description = descriptionController.text.trim();
-                    final labelIds = selectedLabelIds.toList();
-                    final validAssigneeIds = selectedAssigneeIds
-                        .where((id) => _isValidUuid(id))
-                        .toSet();
-
-                    if (validAssigneeIds.length != selectedAssigneeIds.length) {
-                      _showSnack('Có assignee không hợp lệ (UUID), vui lòng chọn lại');
-                      return;
-                    }
-
-                    if (selectedStatusId == null || selectedStatusId!.isEmpty) {
-                      _showSnack('Vui lòng chọn task status');
-                      return;
-                    }
-
-                    bool success;
-                    if (task == null) {
-                      success = await ref.read(taskControllerProvider.notifier).createTask(
-                            projectId: widget.projectId,
-                            title: title,
-                            description: description.isEmpty ? null : description,
-                            priority: priority,
-                            deadline: selectedDeadline,
-                            statusId: selectedStatusId!,
-                            assigneeIds: validAssigneeIds.toList(),
-                            labelIds: labelIds,
-                          );
-                    } else {
-                          final normalizedDescription =
-                            description.isEmpty ? null : description;
-                          final originalDescription =
-                            (task.description?.trim().isNotEmpty ?? false)
-                              ? task.description!.trim()
-                              : null;
-
-                          final changedTitle = title != task.title ? title : null;
-                          final changedDescription =
-                            normalizedDescription != originalDescription
-                              ? normalizedDescription
-                              : null;
-                          final changedPriority =
-                            priority != task.priority.toLowerCase() ? priority : null;
-                          final changedDeadline =
-                            selectedDeadline != task.deadline ? selectedDeadline : null;
-                          final changedStatusId =
-                            selectedStatusId != task.statusId ? selectedStatusId : null;
-
-                          final nextAssigneeIds = validAssigneeIds;
-                          final currentAssigneeIds = task.assigneeIds.toSet();
-                          final changedAssigneeIds =
-                            nextAssigneeIds.length != currentAssigneeIds.length ||
-                                !nextAssigneeIds.containsAll(currentAssigneeIds)
-                              ? nextAssigneeIds.toList()
-                              : null;
-
-                          final nextLabelIds = selectedLabelIds.toSet();
-                          final currentLabelIds = task.labelIds.toSet();
-                          final changedLabelIds =
-                            nextLabelIds.length != currentLabelIds.length ||
-                                !nextLabelIds.containsAll(currentLabelIds)
-                              ? labelIds
-                              : null;
-
-                      final updateFormBody = <String, dynamic>{
-                        'title': changedTitle,
-                        'description': changedDescription,
-                        'priority': changedPriority,
-                        'deadline': changedDeadline?.toIso8601String(),
-                        'statusId': changedStatusId,
-                        'assigneeIds': changedAssigneeIds,
-                        'labelIds': changedLabelIds,
-                      }..removeWhere((_, value) => value == null);
-
-                      if (kDebugMode) {
-                        debugPrint(
-                          '[TASK_UPDATE_CLICK] source=task_list taskId=${task.id} body=$updateFormBody',
-                        );
-                      }
-
-                      success = await ref.read(taskControllerProvider.notifier).updateTask(
-                            taskId: task.id,
-                            title: changedTitle,
-                            description: changedDescription,
-                            priority: changedPriority,
-                            deadline: changedDeadline,
-                            statusId: changedStatusId,
-                            assigneeIds: changedAssigneeIds,
-                            labelIds: changedLabelIds,
-                          );
-                    }
-
-                    if (!mounted) return;
-                    final state = ref.read(taskControllerProvider);
-                    _showSnack(
-                      success
-                          ? (task == null
-                              ? 'Tạo task thành công'
-                              : 'Cập nhật task thành công')
-                          : (state.errorMessage ?? 'Không thể xử lý task'),
-                    );
-                  },
-                  child: Text(task == null ? 'Tạo' : 'Lưu'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => TaskFormDialog(
+        dialogTitle: task == null ? 'Tạo task' : 'Cập nhật task',
+        confirmLabel: task == null ? 'Tạo' : 'Lưu',
+        statusOptions: statusOptions,
+        assigneeOptions: assigneeOptions,
+        labelOptions: labelOptions,
+        initialTitle: task?.title ?? '',
+        initialDescription: task?.description ?? '',
+        initialPriority: (task?.priority ?? 'medium').toLowerCase(),
+        initialDeadline: task?.deadline,
+        initialStatusId: initialStatusId,
+        initialAssigneeIds: initialAssigneeIds,
+        initialLabelIds: initialLabelIds,
+        deadlineButtonLabel: 'Chọn deadline',
+      ),
     );
 
-    titleController.dispose();
-    descriptionController.dispose();
+    if (!mounted || result == null) return;
+
+    final validAssigneeIds = result.assigneeIds.where(_isValidUuid).toSet();
+    if (validAssigneeIds.length != result.assigneeIds.length) {
+      _showSnack('Có assignee không hợp lệ (UUID), vui lòng chọn lại');
+      return;
+    }
+
+    bool success;
+    if (task == null) {
+      success = await ref.read(taskControllerProvider.notifier).createTask(
+            projectId: widget.projectId,
+            title: result.title,
+            description: result.description,
+            priority: result.priority,
+            deadline: result.deadline,
+            statusId: result.statusId,
+            assigneeIds: validAssigneeIds.toList(),
+            labelIds: result.labelIds,
+          );
+    } else {
+      final originalDescription =
+          (task.description?.trim().isNotEmpty ?? false) ? task.description!.trim() : null;
+
+      final changedTitle = result.title != task.title ? result.title : null;
+      final changedDescription = result.description != originalDescription ? result.description : null;
+      final changedPriority =
+          result.priority != task.priority.toLowerCase() ? result.priority : null;
+      final changedDeadline = result.deadline != task.deadline ? result.deadline : null;
+      final changedStatusId = result.statusId != task.statusId ? result.statusId : null;
+
+      final nextAssigneeIds = validAssigneeIds;
+      final currentAssigneeIds = task.assigneeIds.toSet();
+      final changedAssigneeIds =
+          nextAssigneeIds.length != currentAssigneeIds.length ||
+                  !nextAssigneeIds.containsAll(currentAssigneeIds)
+              ? nextAssigneeIds.toList()
+              : null;
+
+      final nextLabelIds = result.labelIds.toSet();
+      final currentLabelIds = task.labelIds.toSet();
+      final changedLabelIds =
+          nextLabelIds.length != currentLabelIds.length ||
+                  !nextLabelIds.containsAll(currentLabelIds)
+              ? result.labelIds
+              : null;
+
+      final updateFormBody = <String, dynamic>{
+        'title': changedTitle,
+        'description': changedDescription,
+        'priority': changedPriority,
+        'deadline': changedDeadline?.toIso8601String(),
+        'statusId': changedStatusId,
+        'assigneeIds': changedAssigneeIds,
+        'labelIds': changedLabelIds,
+      }..removeWhere((_, value) => value == null);
+
+      if (kDebugMode) {
+        debugPrint(
+          '[TASK_UPDATE_CLICK] source=task_list taskId=${task.id} body=$updateFormBody',
+        );
+      }
+
+      success = await ref.read(taskControllerProvider.notifier).updateTask(
+            taskId: task.id,
+            title: changedTitle,
+            description: changedDescription,
+            priority: changedPriority,
+            deadline: changedDeadline,
+            statusId: changedStatusId,
+            assigneeIds: changedAssigneeIds,
+            labelIds: changedLabelIds,
+          );
+    }
+
+    if (!mounted) return;
+    final state = ref.read(taskControllerProvider);
+    _showSnack(
+      success
+          ? (task == null ? 'Tạo task thành công' : 'Cập nhật task thành công')
+          : (state.errorMessage ?? 'Không thể xử lý task'),
+    );
   }
 
   Future<void> _deleteTask(AppTask task) async {
     final confirmed = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('Xóa task'),
             content: Text('Bạn có chắc muốn xóa task "${task.title}"?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => Navigator.of(dialogContext).pop(false),
                 child: const Text('Hủy'),
               ),
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: const Text('Xóa'),
               ),
             ],

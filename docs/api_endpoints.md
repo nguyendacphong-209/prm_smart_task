@@ -127,11 +127,25 @@
   }
   ```
 - **Response:** `WorkspaceMemberResponse`
-- **Note:** Owner only
+- **Note:**
+  - Owner/Admin có thể mời thành viên
+  - Member không có quyền mời
+  - Nếu owner mời: vào workspace ngay (`invitationStatus = accepted`)
+  - Nếu admin mời: tạo yêu cầu chờ owner duyệt (`invitationStatus = pending_owner_approval`)
 
 ### List Workspace Members
 - **GET** `/api/workspaces/{workspaceId}/members`
-- **Response:** `List<WorkspaceMemberResponse>` (id, userId, email, fullName, avatarUrl, role)
+- **Response:** `List<WorkspaceMemberResponse>` (id, userId, email, fullName, avatarUrl, role, invitationStatus)
+
+### Approve Member Invitation
+- **POST** `/api/workspaces/{workspaceId}/members/{userId}/approve`
+- **Response:** `WorkspaceMemberResponse`
+- **Note:** Owner only, chỉ áp dụng với lời mời đang `pending_owner_approval`
+
+### Reject Member Invitation
+- **POST** `/api/workspaces/{workspaceId}/members/{userId}/reject`
+- **Response:** `{ "message": "Invitation rejected successfully" }`
+- **Note:** Owner only, chỉ áp dụng với lời mời đang `pending_owner_approval`
 
 ### Assignee Select Options (by Workspace)
 - **GET** `/api/workspaces/{workspaceId}/assignees`
@@ -300,7 +314,7 @@
 
 ### Get My Notifications
 - **GET** `/api/notifications`
-- **Response:** `List<NotificationResponse>` (id, type, content, isRead, createdAt)
+- **Response:** `List<NotificationResponse>` (id, type, content, isRead, workspaceId, targetUserId, createdAt)
 - **Note:** Sorted by createdAt descending (newest first)
 
 ### Get Unread Count
@@ -318,6 +332,11 @@
 **Note:** Notifications auto-generated on:
 - Task assigned: `TASK_ASSIGNED` type
 - Task status changed: `TASK_STATUS_CHANGED` type (sent to all assignees)
+- Workspace owner/admin invite flow:
+  - `WORKSPACE_INVITE_APPROVAL_REQUEST`: gửi owner khi admin mời thành viên
+  - `WORKSPACE_INVITATION_APPROVED`: gửi user được mời khi owner duyệt
+  - `WORKSPACE_INVITATION_REJECTED`: gửi admin đã request khi owner từ chối
+  - `WORKSPACE_INVITED`: gửi user khi owner thêm trực tiếp vào workspace
 
 ---
 
@@ -400,13 +419,15 @@ All error responses follow this format:
 
 1. **Register** → Get accessToken + refreshToken
 2. **Create Workspace** → Get workspaceId
-3. **Invite Members** → Get memberIds (or use your own userId)
+3. **Invite Members**:
+  - owner invite => vào ngay
+  - admin invite => owner duyệt qua `/approve` hoặc `/reject`
 4. **Create Project** → Get projectId
 5. **Create Task Status** → Optional, or use auto-generated defaults
 6. **Create Task** → Get taskId, assign members
 7. **Move Task** via Kanban → Triggers notifications
 8. **Add Comment** → Extract mentions
-9. **Check Notifications** → See TASK_ASSIGNED + TASK_STATUS_CHANGED
+9. **Check Notifications** → See TASK_ASSIGNED + TASK_STATUS_CHANGED + workspace invite types
 10. **View Dashboard** → See project progress + personal stats
 
 ---

@@ -8,6 +8,7 @@
 ### Dynamic IDs (update manually from previous responses)
 @workspaceId = REPLACE_WORKSPACE_ID
 @memberUserId = REPLACE_MEMBER_USER_ID
+@pendingInviteUserId = REPLACE_PENDING_INVITE_USER_ID
 
 ### 1) Create workspace
 POST {{baseUrl}}/api/workspaces
@@ -26,13 +27,24 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/api/workspaces/{{workspaceId}}
 Authorization: Bearer {{accessToken}}
 
-### 4) Invite member (owner only)
+### 4) Invite member (owner/admin)
 POST {{baseUrl}}/api/workspaces/{{workspaceId}}/members/invite
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
   "email": "member.test@example.com",
+  "role": "member"
+}
+
+### 4.1) Invite member as admin (should become pending_owner_approval)
+### Use an admin access token of this workspace to test
+POST {{baseUrl}}/api/workspaces/{{workspaceId}}/members/invite
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "email": "member.pending@example.com",
   "role": "member"
 }
 
@@ -48,6 +60,14 @@ Content-Type: application/json
 {
   "role": "admin"
 }
+
+### 6.1) Approve pending invitation (owner only)
+POST {{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{pendingInviteUserId}}/approve
+Authorization: Bearer {{accessToken}}
+
+### 6.2) Reject pending invitation (owner only)
+POST {{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{pendingInviteUserId}}/reject
+Authorization: Bearer {{accessToken}}
 
 ### 7) Remove member (owner only)
 DELETE {{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{memberUserId}}

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/kanban/application/providers/kanban_providers.dart';
 import 'package:prm_smart_task/features/kanban/domain/entities/kanban_task_card.dart';
+import 'package:prm_smart_task/features/kanban/presentation/widgets/create_status_dialog.dart';
 import 'package:prm_smart_task/shared/widgets/empty_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/error_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/glass_card.dart';
@@ -30,10 +32,7 @@ class _KanbanBoardPageState extends ConsumerState<KanbanBoardPage> {
   final ScrollController _boardScrollController = ScrollController();
 
   void _showSnack(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    showAppSnack(message);
   }
 
   @override
@@ -107,51 +106,24 @@ class _KanbanBoardPageState extends ConsumerState<KanbanBoardPage> {
   }
 
   Future<void> _showCreateStatusDialog() async {
-    final nameController = TextEditingController();
-
-    await showDialog<void>(
+    final statusName = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tạo status mới'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Tên status',
-            prefixIcon: Icon(Icons.add_card_outlined),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final name = nameController.text.trim();
-              if (name.length < 2) {
-                _showSnack('Tên status tối thiểu 2 ký tự');
-                return;
-              }
-
-              Navigator.of(context).pop();
-              final success = await ref
-                  .read(kanbanControllerProvider.notifier)
-                  .createStatus(projectId: widget.projectId, name: name);
-
-              final state = ref.read(kanbanControllerProvider);
-              _showSnack(
-                success
-                    ? 'Tạo status thành công'
-                    : (state.errorMessage ?? 'Không thể tạo status'),
-              );
-            },
-            child: const Text('Tạo'),
-          ),
-        ],
-      ),
+      builder: (_) => const CreateStatusDialog(),
     );
 
-    nameController.dispose();
+    if (!mounted || statusName == null) return;
+
+    final success = await ref
+        .read(kanbanControllerProvider.notifier)
+        .createStatus(projectId: widget.projectId, name: statusName);
+
+    if (!mounted) return;
+    final state = ref.read(kanbanControllerProvider);
+    _showSnack(
+      success
+          ? 'Tạo status thành công'
+          : (state.errorMessage ?? 'Không thể tạo status'),
+    );
   }
 
   Future<void> _moveTask({

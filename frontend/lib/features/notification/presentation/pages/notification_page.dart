@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/notification/application/providers/notification_providers.dart';
 import 'package:prm_smart_task/features/notification/domain/entities/task_notification.dart';
@@ -16,6 +18,16 @@ class NotificationPage extends ConsumerStatefulWidget {
 }
 
 class _NotificationPageState extends ConsumerState<NotificationPage> {
+  ProviderSubscription<dynamic>? _notificationSubscription;
+
+  void _showSnack(String message) {
+    final messenger = appScaffoldMessengerKey.currentState;
+    if (messenger == null) return;
+    messenger.showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   String _formatDate(DateTime? date) {
     if (date == null) return 'Không rõ thời gian';
     final local = date.toLocal();
@@ -25,9 +37,25 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
   @override
   void initState() {
     super.initState();
+
+    _notificationSubscription = ref.listenManual(
+      notificationControllerProvider,
+      (previous, next) {
+        if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
+          _showSnack(next.errorMessage!);
+        }
+      },
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(notificationControllerProvider.notifier).loadNotifications();
     });
+  }
+
+  @override
+  void dispose() {
+    _notificationSubscription?.close();
+    super.dispose();
   }
 
   Future<void> _reload() {
@@ -39,25 +67,40 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
   String _typeLabel(TaskNotification notification) {
     if (notification.isTaskAssigned) return 'Task được giao';
     if (notification.isTaskStatusChanged) return 'Task đổi trạng thái';
+    if (notification.isWorkspaceInviteApprovalRequest) return 'Yêu cầu duyệt mời thành viên';
+    if (notification.isWorkspaceInvitationApproved) return 'Lời mời vào workspace đã duyệt';
+    if (notification.isWorkspaceInvitationRejected) return 'Yêu cầu mời bị từ chối';
+    if (notification.isWorkspaceInvited) return 'Được thêm vào workspace';
     return notification.type;
   }
 
   IconData _typeIcon(TaskNotification notification) {
     if (notification.isTaskAssigned) return Icons.assignment_ind_outlined;
     if (notification.isTaskStatusChanged) return Icons.sync_alt_rounded;
+    if (notification.isWorkspaceInviteApprovalRequest) return Icons.approval_outlined;
+    if (notification.isWorkspaceInvitationApproved) return Icons.verified_outlined;
+    if (notification.isWorkspaceInvitationRejected) return Icons.cancel_outlined;
+    if (notification.isWorkspaceInvited) return Icons.group_add_outlined;
     return Icons.notifications_outlined;
+  }
+
+  Future<void> _handleNotificationTap(TaskNotification notification) async {
+    if (!notification.isRead) {
+      await ref
+          .read(notificationControllerProvider.notifier)
+          .markAsRead(notificationId: notification.id);
+    }
+
+    if (!mounted) return;
+    if (notification.isWorkspaceInviteApprovalRequest &&
+        notification.workspaceId != null &&
+        notification.workspaceId!.isNotEmpty) {
+      context.push('/workspaces/${notification.workspaceId}');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(notificationControllerProvider, (previous, next) {
-      if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.errorMessage!)),
-        );
-      }
-    });
-
     final state = ref.watch(notificationControllerProvider);
     final colors = AppBackground.colors(Theme.of(context).brightness);
 
@@ -140,13 +183,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
                                           .read(notificationControllerProvider.notifier)
                                           .markAllAsRead();
                                       if (!context.mounted || !success) return;
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Đã đánh dấu tất cả là đã đọc',
-                                          ),
-                                        ),
-                                      );
+                                      showAppSnack('Đã đánh dấu tất cả là đã đọc');
                                     },
                               icon: state.isSubmitting
                                   ? const SizedBox(
@@ -180,15 +217,7 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
                             style: GlassCardStyle.liquid,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
-                              onTap: notification.isRead
-                                  ? null
-                                  : () {
-                                      ref
-                                          .read(notificationControllerProvider.notifier)
-                                          .markAsRead(
-                                            notificationId: notification.id,
-                                          );
-                                    },
+                              onTap: () => _handleNotificationTap(notification),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

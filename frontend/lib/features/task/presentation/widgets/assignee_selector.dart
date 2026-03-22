@@ -39,9 +39,9 @@ class _AssigneeSelectorState extends State<AssigneeSelector> {
   void _showAssigneePopup() {
     showDialog<void>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setStateDialog) {
+          builder: (_, setStateDialog) {
             return AlertDialog(
               title: const Text('Chọn thành viên'),
               content: SingleChildScrollView(
@@ -75,13 +75,13 @@ class _AssigneeSelectorState extends State<AssigneeSelector> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
                   child: const Text('Hủy'),
                 ),
                 FilledButton(
                   onPressed: () {
                     widget.onChanged(Set<String>.from(_selectedIds));
-                    Navigator.of(context).pop();
+                    Navigator.of(dialogContext).pop();
                   },
                   child: const Text('Lưu'),
                 ),

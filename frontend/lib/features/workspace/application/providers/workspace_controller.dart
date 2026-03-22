@@ -129,7 +129,7 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
     state = state.copyWith(isSubmitting: true, clearError: true, clearInfo: true);
 
     try {
-      await _repository.inviteMember(
+      final invitedMember = await _repository.inviteMember(
         workspaceId: workspaceId,
         email: email,
         role: role,
@@ -139,7 +139,65 @@ class WorkspaceController extends StateNotifier<WorkspaceState> {
       state = state.copyWith(
         isSubmitting: false,
         members: members,
-        infoMessage: 'Mời thành viên thành công',
+        infoMessage: invitedMember.isPendingOwnerApproval
+            ? 'Đã gửi lời mời. Thành viên sẽ vào workspace sau khi owner duyệt.'
+            : 'Mời thành viên thành công',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> approveMemberInvitation({
+    required String workspaceId,
+    required String userId,
+  }) async {
+    state = state.copyWith(isSubmitting: true, clearError: true, clearInfo: true);
+
+    try {
+      await _repository.approveMemberInvitation(
+        workspaceId: workspaceId,
+        userId: userId,
+      );
+
+      final members = await _repository.getWorkspaceMembers(workspaceId: workspaceId);
+      state = state.copyWith(
+        isSubmitting: false,
+        members: members,
+        infoMessage: 'Đã duyệt lời mời thành viên',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> rejectMemberInvitation({
+    required String workspaceId,
+    required String userId,
+  }) async {
+    state = state.copyWith(isSubmitting: true, clearError: true, clearInfo: true);
+
+    try {
+      await _repository.rejectMemberInvitation(
+        workspaceId: workspaceId,
+        userId: userId,
+      );
+
+      final members = await _repository.getWorkspaceMembers(workspaceId: workspaceId);
+      state = state.copyWith(
+        isSubmitting: false,
+        members: members,
+        infoMessage: 'Đã từ chối lời mời thành viên',
       );
       return true;
     } catch (e) {

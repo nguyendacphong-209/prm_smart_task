@@ -17,6 +17,8 @@ class TaskNotificationModel {
     required this.type,
     required this.content,
     required this.isRead,
+    this.workspaceId,
+    this.targetUserId,
     this.createdAt,
   });
 
@@ -24,6 +26,8 @@ class TaskNotificationModel {
   final String type;
   final String content;
   final bool isRead;
+  final String? workspaceId;
+  final String? targetUserId;
   final DateTime? createdAt;
 
   factory TaskNotificationModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,8 @@ class TaskNotificationModel {
       type: json['type']?.toString() ?? '',
       content: json['content']?.toString() ?? '',
       isRead: json['isRead'] as bool? ?? false,
+      workspaceId: json['workspaceId']?.toString(),
+      targetUserId: json['targetUserId']?.toString(),
       createdAt: _parseDateTime(json['createdAt']),
     );
   }
@@ -42,6 +48,8 @@ class TaskNotificationModel {
       type: type,
       content: content,
       isRead: isRead,
+      workspaceId: workspaceId,
+      targetUserId: targetUserId,
       createdAt: createdAt,
     );
   }

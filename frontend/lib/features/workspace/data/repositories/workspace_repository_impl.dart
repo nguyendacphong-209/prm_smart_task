@@ -88,6 +88,29 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
   }
 
   @override
+  Future<WorkspaceMember> approveMemberInvitation({
+    required String workspaceId,
+    required String userId,
+  }) async {
+    final model = await _remote.approveMemberInvitation(
+      workspaceId: workspaceId,
+      userId: userId,
+    );
+    return model.toEntity();
+  }
+
+  @override
+  Future<void> rejectMemberInvitation({
+    required String workspaceId,
+    required String userId,
+  }) async {
+    await _remote.rejectMemberInvitation(
+      workspaceId: workspaceId,
+      userId: userId,
+    );
+  }
+
+  @override
   Future<void> removeMember({
     required String workspaceId,
     required String userId,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/workspace/application/providers/workspace_providers.dart';
 import 'package:prm_smart_task/shared/widgets/glass_card.dart';
@@ -33,17 +34,13 @@ class _CreateWorkspacePageState extends ConsumerState<CreateWorkspacePage> {
 
     final state = ref.read(workspaceControllerProvider);
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tạo workspace thành công')),
-      );
+      showAppSnack('Tạo workspace thành công');
       context.pop(true);
       return;
     }
 
     final message = state.errorMessage ?? 'Không thể tạo workspace';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    showAppSnack(message);
   }
 
   @override

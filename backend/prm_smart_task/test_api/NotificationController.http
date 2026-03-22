@@ -12,6 +12,10 @@
 GET {{baseUrl}}/api/notifications
 Authorization: Bearer {{accessToken}}
 
+### Response now includes:
+### - workspaceId (nullable)
+### - targetUserId (nullable)
+
 ### 2) Get unread notification count
 GET {{baseUrl}}/api/notifications/unread-count
 Authorization: Bearer {{accessToken}}
@@ -27,4 +31,9 @@ Authorization: Bearer {{accessToken}}
 ### Quick flow to generate notifications:
 ### A) Assign task to a member via TaskController update/create API
 ### B) Move task status via KanbanController API
-### C) Use endpoint (1) to see generated notifications
+### C) Workspace invite flow:
+###    - admin invite member -> owner gets WORKSPACE_INVITE_APPROVAL_REQUEST
+###    - owner approve -> invited user gets WORKSPACE_INVITATION_APPROVED
+###    - owner reject -> admin gets WORKSPACE_INVITATION_REJECTED
+###    - owner direct invite -> invited user gets WORKSPACE_INVITED
+### D) Use endpoint (1) to see generated notifications

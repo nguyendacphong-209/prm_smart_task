@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/workspace/application/providers/workspace_providers.dart';
 import 'package:prm_smart_task/shared/widgets/empty_state_view.dart';
@@ -17,8 +18,9 @@ class WorkspaceListPage extends ConsumerStatefulWidget {
 
 class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
   void _showSnack(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = appScaffoldMessengerKey.currentState;
+    if (messenger == null) return;
+    messenger.showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
@@ -26,6 +28,7 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(workspaceControllerProvider.notifier).loadMyWorkspaces();
     });
@@ -57,50 +60,55 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
     required String workspaceId,
     required String currentName,
   }) async {
-    final nameController = TextEditingController(text: currentName);
+    var nextName = currentName;
 
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sửa workspace'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Tên workspace',
-            prefixIcon: Icon(Icons.edit_outlined),
+      builder: (dialogContext) => AlertDialog(
+          title: const Text('Sửa workspace'),
+          content: TextFormField(
+            initialValue: currentName,
+            onChanged: (value) => nextName = value,
+            decoration: const InputDecoration(
+              labelText: 'Tên workspace',
+              prefixIcon: Icon(Icons.edit_outlined),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final navigator = Navigator.of(dialogContext);
+
+                final trimmedName = nextName.trim();
+                if (trimmedName.length < 3) {
+                  _showSnack('Tên workspace tối thiểu 3 ký tự');
+                  return;
+                }
+
+                navigator.pop();
+
+                final success = await ref
+                    .read(workspaceControllerProvider.notifier)
+                    .updateWorkspace(workspaceId: workspaceId, name: trimmedName);
+
+                if (!mounted) return;
+
+                final state = ref.read(workspaceControllerProvider);
+                _showSnack(
+                  success
+                      ? 'Cập nhật workspace thành công'
+                      : (state.errorMessage ?? 'Không thể cập nhật workspace'),
+                );
+              },
+              child: const Text('Lưu'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final nextName = nameController.text.trim();
-              if (nextName.length < 3) {
-                _showSnack('Tên workspace tối thiểu 3 ký tự');
-                return;
-              }
-
-              Navigator.of(context).pop();
-              final success = await ref
-                  .read(workspaceControllerProvider.notifier)
-                  .updateWorkspace(workspaceId: workspaceId, name: nextName);
-              final state = ref.read(workspaceControllerProvider);
-              _showSnack(
-                success
-                    ? 'Cập nhật workspace thành công'
-                    : (state.errorMessage ?? 'Không thể cập nhật workspace'),
-              );
-            },
-            child: const Text('Lưu'),
-          ),
-        ],
-      ),
     );
-
-    nameController.dispose();
   }
 
   Future<void> _confirmDeleteWorkspace({
@@ -109,16 +117,16 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
   }) async {
     final confirmed = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('Xóa workspace'),
             content: Text('Bạn có chắc muốn xóa workspace "$workspaceName"?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => Navigator.of(dialogContext).pop(false),
                 child: const Text('Hủy'),
               ),
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: const Text('Xóa'),
               ),
             ],
@@ -141,12 +149,6 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(workspaceControllerProvider, (previous, next) {
-      if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
-        _showSnack(next.errorMessage!);
-      }
-    });
-
     final state = ref.watch(workspaceControllerProvider);
     final colors = AppBackground.colors(Theme.of(context).brightness);
 

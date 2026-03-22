@@ -45,6 +45,7 @@ class WorkspaceMemberModel {
     required this.fullName,
     required this.avatarUrl,
     required this.role,
+    this.invitationStatus = 'accepted',
   });
 
   final String id;
@@ -53,6 +54,7 @@ class WorkspaceMemberModel {
   final String fullName;
   final String? avatarUrl;
   final String role;
+  final String invitationStatus;
 
   factory WorkspaceMemberModel.fromJson(Map<String, dynamic> json) {
     return WorkspaceMemberModel(
@@ -62,6 +64,7 @@ class WorkspaceMemberModel {
       fullName: json['fullName']?.toString() ?? '',
       avatarUrl: json['avatarUrl']?.toString(),
       role: json['role']?.toString() ?? 'member',
+      invitationStatus: json['invitationStatus']?.toString() ?? 'accepted',
     );
   }
 
@@ -73,6 +76,7 @@ class WorkspaceMemberModel {
       fullName: fullName,
       avatarUrl: avatarUrl,
       role: role,
+      invitationStatus: invitationStatus,
     );
   }
 }

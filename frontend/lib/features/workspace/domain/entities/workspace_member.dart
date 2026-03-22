@@ -6,6 +6,7 @@ class WorkspaceMember {
     required this.fullName,
     required this.avatarUrl,
     required this.role,
+    this.invitationStatus = 'accepted',
   });
 
   final String id;
@@ -14,4 +15,8 @@ class WorkspaceMember {
   final String fullName;
   final String? avatarUrl;
   final String role;
+  final String invitationStatus;
+
+  bool get isPendingOwnerApproval =>
+      invitationStatus.toLowerCase() == 'pending_owner_approval';
 }

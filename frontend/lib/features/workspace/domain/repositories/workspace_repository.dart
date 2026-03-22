@@ -31,6 +31,16 @@ abstract class WorkspaceRepository {
     required String role,
   });
 
+  Future<WorkspaceMember> approveMemberInvitation({
+    required String workspaceId,
+    required String userId,
+  });
+
+  Future<void> rejectMemberInvitation({
+    required String workspaceId,
+    required String userId,
+  });
+
   Future<void> removeMember({
     required String workspaceId,
     required String userId,

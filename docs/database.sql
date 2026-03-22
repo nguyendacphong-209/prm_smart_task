@@ -21,7 +21,9 @@ CREATE TABLE workspace_members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    invited_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     role VARCHAR(50) DEFAULT 'member',
+    invitation_status VARCHAR(50) DEFAULT 'accepted',
     UNIQUE (workspace_id, user_id)
 );
 
@@ -102,9 +104,23 @@ CREATE TABLE notifications (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     type VARCHAR(50),
     content TEXT,
+    workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+    target_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- MIGRATION: Add created_by column to labels table
 ALTER TABLE labels ADD COLUMN created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+
+ALTER TABLE workspace_members
+ADD COLUMN invitation_status VARCHAR(50) NOT NULL DEFAULT 'accepted';
+
+ALTER TABLE workspace_members
+ADD COLUMN invited_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+
+ALTER TABLE notifications
+ADD COLUMN workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE;
+
+ALTER TABLE notifications
+ADD COLUMN target_user_id UUID REFERENCES users(id) ON DELETE SET NULL;

@@ -79,6 +79,8 @@ class NotificationController extends StateNotifier<NotificationState> {
                     type: item.type,
                     content: item.content,
                     isRead: true,
+                    workspaceId: item.workspaceId,
+                    targetUserId: item.targetUserId,
                     createdAt: item.createdAt,
                   ),
           )

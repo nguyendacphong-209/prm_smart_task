@@ -12,6 +12,7 @@ import 'package:prm_smart_task/features/task/presentation/pages/task_detail_page
 import 'package:prm_smart_task/features/task/presentation/pages/task_list_page.dart';
 import 'package:prm_smart_task/features/workspace/presentation/pages/create_workspace_page.dart';
 import 'package:prm_smart_task/features/workspace/presentation/pages/workspace_detail_page.dart';
+import 'package:prm_smart_task/features/workspace/presentation/pages/pending_approvals_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -56,6 +57,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final workspaceId = state.pathParameters['id'] ?? '';
           return WorkspaceDetailPage(workspaceId: workspaceId);
+        },
+      ),
+      GoRoute(
+        path: '/workspaces/:id/pending-approvals',
+        builder: (context, state) {
+          final workspaceId = state.pathParameters['id'] ?? '';
+          return PendingApprovalsPage(workspaceId: workspaceId);
         },
       ),
       GoRoute(

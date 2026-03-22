@@ -27,6 +27,12 @@ class ApiConstants {
   static String workspaceMemberRole(String workspaceId, String userId) =>
       '/api/workspaces/$workspaceId/members/$userId/role';
 
+  static String workspaceMemberApproveInvitation(String workspaceId, String userId) =>
+      '/api/workspaces/$workspaceId/members/$userId/approve';
+
+  static String workspaceMemberRejectInvitation(String workspaceId, String userId) =>
+      '/api/workspaces/$workspaceId/members/$userId/reject';
+
   static String workspaceMember(String workspaceId, String userId) =>
       '/api/workspaces/$workspaceId/members/$userId';
 

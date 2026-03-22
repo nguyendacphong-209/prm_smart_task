@@ -132,6 +132,33 @@ class WorkspaceRemoteDataSource {
     }
   }
 
+  Future<WorkspaceMemberModel> approveMemberInvitation({
+    required String workspaceId,
+    required String userId,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.workspaceMemberApproveInvitation(workspaceId, userId),
+      );
+      return WorkspaceMemberModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e));
+    }
+  }
+
+  Future<void> rejectMemberInvitation({
+    required String workspaceId,
+    required String userId,
+  }) async {
+    try {
+      await _dio.post(
+        ApiConstants.workspaceMemberRejectInvitation(workspaceId, userId),
+      );
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e));
+    }
+  }
+
   Future<void> removeMember({
     required String workspaceId,
     required String userId,

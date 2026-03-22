@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/core/theme/app_theme.dart';
 import 'package:prm_smart_task/features/workspace/application/providers/workspace_providers.dart';
 import 'package:prm_smart_task/features/workspace/domain/entities/workspace_member.dart';
+import 'package:prm_smart_task/features/workspace/presentation/widgets/invite_member_dialog.dart';
 import 'package:prm_smart_task/shared/widgets/empty_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/error_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/glass_card.dart';
@@ -20,8 +22,9 @@ class WorkspaceDetailPage extends ConsumerStatefulWidget {
 
 class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
   void _showSnack(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = appScaffoldMessengerKey.currentState;
+    if (messenger == null) return;
+    messenger.showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
@@ -29,6 +32,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(workspaceControllerProvider.notifier)
@@ -46,50 +50,55 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
     required String workspaceId,
     required String currentName,
   }) async {
-    final nameController = TextEditingController(text: currentName);
+    var nextName = currentName;
 
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sửa workspace'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Tên workspace',
-            prefixIcon: Icon(Icons.edit_outlined),
+      builder: (dialogContext) => AlertDialog(
+          title: const Text('Sửa workspace'),
+          content: TextFormField(
+            initialValue: currentName,
+            onChanged: (value) => nextName = value,
+            decoration: const InputDecoration(
+              labelText: 'Tên workspace',
+              prefixIcon: Icon(Icons.edit_outlined),
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final navigator = Navigator.of(dialogContext);
+
+                final trimmedName = nextName.trim();
+                if (trimmedName.length < 3) {
+                  _showSnack('Tên workspace tối thiểu 3 ký tự');
+                  return;
+                }
+
+                navigator.pop();
+
+                final success = await ref
+                    .read(workspaceControllerProvider.notifier)
+                    .updateWorkspace(workspaceId: workspaceId, name: trimmedName);
+
+                if (!mounted) return;
+
+                final state = ref.read(workspaceControllerProvider);
+                _showSnack(
+                  success
+                      ? 'Cập nhật workspace thành công'
+                      : (state.errorMessage ?? 'Không thể cập nhật workspace'),
+                );
+              },
+              child: const Text('Lưu'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final nextName = nameController.text.trim();
-              if (nextName.length < 3) {
-                _showSnack('Tên workspace tối thiểu 3 ký tự');
-                return;
-              }
-
-              Navigator.of(context).pop();
-              final success = await ref
-                  .read(workspaceControllerProvider.notifier)
-                  .updateWorkspace(workspaceId: workspaceId, name: nextName);
-              final state = ref.read(workspaceControllerProvider);
-              _showSnack(
-                success
-                    ? 'Cập nhật workspace thành công'
-                    : (state.errorMessage ?? 'Không thể cập nhật workspace'),
-              );
-            },
-            child: const Text('Lưu'),
-          ),
-        ],
-      ),
     );
-
-    nameController.dispose();
   }
 
   Future<void> _confirmDeleteWorkspace({
@@ -98,16 +107,16 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
   }) async {
     final confirmed = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('Xóa workspace'),
             content: Text('Bạn có chắc muốn xóa workspace "$workspaceName"?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => Navigator.of(dialogContext).pop(false),
                 child: const Text('Hủy'),
               ),
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: const Text('Xóa'),
               ),
             ],
@@ -133,92 +142,63 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
   }
 
   Future<void> _showInviteDialog() async {
-    final emailController = TextEditingController();
-    String role = 'member';
-
-    await showDialog<void>(
+    final payload = await showDialog<InviteMemberPayload>(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text('Mời thành viên'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.alternate_email_rounded),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: role,
-                    decoration: const InputDecoration(
-                      labelText: 'Vai trò',
-                      prefixIcon: Icon(Icons.badge_outlined),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'member', child: Text('Member')),
-                      DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                    ],
-                    onChanged: (value) {
-                      setStateDialog(() {
-                        role = value ?? 'member';
-                      });
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Hủy'),
-                ),
-                FilledButton(
-                  onPressed: () async {
-                    final email = emailController.text.trim();
-                    if (email.isEmpty || !email.contains('@')) {
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(content: Text('Email không hợp lệ')),
-                      );
-                      return;
-                    }
-
-                    Navigator.of(context).pop();
-                    final success = await ref
-                        .read(workspaceControllerProvider.notifier)
-                        .inviteMember(
-                          workspaceId: widget.workspaceId,
-                          email: email,
-                          role: role,
-                        );
-
-                    if (!mounted) return;
-                    final state = ref.read(workspaceControllerProvider);
-                    ScaffoldMessenger.of(this.context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          success
-                              ? 'Mời thành viên thành công'
-                              : (state.errorMessage ?? 'Không thể mời thành viên'),
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text('Mời'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => const InviteMemberDialog(),
     );
 
-    emailController.dispose();
+    if (!mounted || payload == null) return;
+
+    final success = await ref
+        .read(workspaceControllerProvider.notifier)
+        .inviteMember(
+          workspaceId: widget.workspaceId,
+          email: payload.email,
+          role: payload.role,
+        );
+
+    if (!mounted) return;
+    if (success) {
+      final state = ref.read(workspaceControllerProvider);
+      _showSnack(state.infoMessage ?? 'Mời thành viên thành công');
+    } else {
+      final state = ref.read(workspaceControllerProvider);
+      _showSnack(state.errorMessage ?? 'Không thể mời thành viên');
+    }
+  }
+
+  Future<void> _approveMemberInvitation(WorkspaceMember member) async {
+    final success = await ref
+        .read(workspaceControllerProvider.notifier)
+        .approveMemberInvitation(
+          workspaceId: widget.workspaceId,
+          userId: member.userId,
+        );
+
+    if (!mounted) return;
+    final state = ref.read(workspaceControllerProvider);
+    _showSnack(
+      success
+          ? (state.infoMessage ?? 'Đã duyệt lời mời thành viên')
+          : (state.errorMessage ?? 'Không thể duyệt lời mời thành viên'),
+    );
+  }
+
+  Future<void> _rejectMemberInvitation(WorkspaceMember member) async {
+    final success = await ref
+        .read(workspaceControllerProvider.notifier)
+        .rejectMemberInvitation(
+          workspaceId: widget.workspaceId,
+          userId: member.userId,
+        );
+
+    if (!mounted) return;
+    final state = ref.read(workspaceControllerProvider);
+    _showSnack(
+      success
+          ? (state.infoMessage ?? 'Đã từ chối lời mời thành viên')
+          : (state.errorMessage ?? 'Không thể từ chối lời mời thành viên'),
+    );
   }
 
   Future<void> _updateRole(WorkspaceMember member) async {
@@ -227,7 +207,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -242,7 +222,7 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                         ? const Icon(Icons.check_rounded)
                         : null,
                     onTap: () async {
-                      Navigator.of(context).pop();
+                      Navigator.of(sheetContext).pop();
                       if (member.role.toLowerCase() == role) return;
 
                       final success = await ref
@@ -255,14 +235,10 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
 
                       if (!mounted) return;
                       final state = ref.read(workspaceControllerProvider);
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            success
-                                ? 'Cập nhật vai trò thành công'
-                                : (state.errorMessage ?? 'Không thể cập nhật vai trò'),
-                          ),
-                        ),
+                      _showSnack(
+                        success
+                            ? 'Cập nhật vai trò thành công'
+                            : (state.errorMessage ?? 'Không thể cập nhật vai trò'),
                       );
                     },
                   ),
@@ -277,16 +253,16 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
   Future<void> _removeMember(WorkspaceMember member) async {
     final confirmed = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('Xóa thành viên'),
             content: Text('Bạn có chắc muốn xóa ${member.fullName} khỏi workspace?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => Navigator.of(dialogContext).pop(false),
                 child: const Text('Hủy'),
               ),
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: const Text('Xóa'),
               ),
             ],
@@ -305,12 +281,8 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
 
     if (!mounted) return;
     final state = ref.read(workspaceControllerProvider);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success ? 'Đã xóa thành viên' : (state.errorMessage ?? 'Không thể xóa thành viên'),
-        ),
-      ),
+    _showSnack(
+      success ? 'Đã xóa thành viên' : (state.errorMessage ?? 'Không thể xóa thành viên'),
     );
   }
 
@@ -325,17 +297,22 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
     }
   }
 
+  String _invitationStatusLabel(String invitationStatus) {
+    switch (invitationStatus.toLowerCase()) {
+      case 'pending_owner_approval':
+        return 'Chờ owner duyệt';
+      default:
+        return 'Đang hoạt động';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    ref.listen(workspaceControllerProvider, (previous, next) {
-      if (next.errorMessage != null && next.errorMessage != previous?.errorMessage) {
-        _showSnack(next.errorMessage!);
-      }
-    });
-
     final state = ref.watch(workspaceControllerProvider);
     final colors = AppBackground.colors(Theme.of(context).brightness);
     final workspace = state.selectedWorkspace;
+    final isOwner = workspace?.myRole.toLowerCase() == 'owner';
+    final pendingApprovals = state.members.where((member) => member.isPendingOwnerApproval).toList();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -454,6 +431,19 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                                   label: const Text('Quản lý projects'),
                                 ),
                               ),
+                              if (isOwner) ...[
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton.tonalIcon(
+                                    onPressed: () => context.push(
+                                      '/workspaces/${widget.workspaceId}/pending-approvals',
+                                    ),
+                                    icon: const Icon(Icons.approval_outlined),
+                                    label: Text('Pending approvals (${pendingApprovals.length})'),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -536,44 +526,87 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(999),
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                          .withValues(alpha: 0.12),
-                                      ),
-                                      child: Text(
-                                        _memberRoleLabel(member.role),
-                                        style: Theme.of(context).textTheme.labelMedium,
-                                      ),
-                                    ),
-                                    PopupMenuButton<String>(
-                                      enabled: !state.isSubmitting,
-                                      itemBuilder: (context) => const [
-                                        PopupMenuItem(
-                                          value: 'role',
-                                          child: Text('Đổi vai trò'),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(999),
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withValues(alpha: 0.12),
+                                          ),
+                                          child: Text(
+                                            _memberRoleLabel(member.role),
+                                            style: Theme.of(context).textTheme.labelMedium,
+                                          ),
                                         ),
-                                        PopupMenuItem(
-                                          value: 'remove',
-                                          child: Text('Xóa khỏi workspace'),
+                                        const SizedBox(height: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(999),
+                                            color: member.isPendingOwnerApproval
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .secondary
+                                                    .withValues(alpha: 0.2)
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .tertiary
+                                                    .withValues(alpha: 0.18),
+                                          ),
+                                          child: Text(
+                                            _invitationStatusLabel(member.invitationStatus),
+                                            style: Theme.of(context).textTheme.labelSmall,
+                                          ),
                                         ),
-                                      ],
-                                      onSelected: (value) {
-                                        if (value == 'role') {
-                                          _updateRole(member);
-                                          return;
-                                        }
+                                        if (member.isPendingOwnerApproval && isOwner) ...[
+                                          const SizedBox(height: 8),
+                                          FilledButton.tonal(
+                                            onPressed: state.isSubmitting
+                                                ? null
+                                                : () => _approveMemberInvitation(member),
+                                            child: const Text('Duyệt'),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          TextButton(
+                                            onPressed: state.isSubmitting
+                                                ? null
+                                                : () => _rejectMemberInvitation(member),
+                                            child: const Text('Từ chối'),
+                                          ),
+                                        ] else
+                                          PopupMenuButton<String>(
+                                            enabled: !state.isSubmitting,
+                                            itemBuilder: (context) => const [
+                                              PopupMenuItem(
+                                                value: 'role',
+                                                child: Text('Đổi vai trò'),
+                                              ),
+                                              PopupMenuItem(
+                                                value: 'remove',
+                                                child: Text('Xóa khỏi workspace'),
+                                              ),
+                                            ],
+                                            onSelected: (value) {
+                                              if (value == 'role') {
+                                                _updateRole(member);
+                                                return;
+                                              }
 
-                                        _removeMember(member);
-                                      },
+                                              _removeMember(member);
+                                            },
+                                          ),
+                                      ],
                                     ),
                                   ],
                                 ),
