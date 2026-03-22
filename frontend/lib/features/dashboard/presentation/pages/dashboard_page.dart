@@ -69,15 +69,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return value.toString();
   }
 
+  String _percentageText(double value) {
+    if (value.isNaN || value.isInfinite) return '0%';
+    return '${value.toStringAsFixed(0)}%';
+  }
+
   Widget _metricTile(
     BuildContext context, {
     required String title,
     required String value,
     required IconData icon,
     required Color color,
+    String? subtitle,
   }) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 72),
+      constraints: const BoxConstraints(minHeight: 84),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -111,13 +117,22 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(title, style: Theme.of(context).textTheme.labelMedium),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   value,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.labelSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ],
             ),
           ),
@@ -142,28 +157,137 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     return SizedBox(
       height: 172,
-      child: PieChart(
-        PieChartData(
-          centerSpaceRadius: 32,
-          sectionsSpace: 3,
-          pieTouchData: PieTouchData(enabled: false),
-          sections: entries.asMap().entries.map((entry) {
-            final index = entry.key;
-            final value = entry.value.value;
-            final color = chartPalette[index % chartPalette.length];
-            return PieChartSectionData(
-              value: value.toDouble(),
-              color: color,
-              radius: 56,
-              title: '${((value / sum) * 100).round()}%',
-              titleStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w700,
-                  ),
-            );
-          }).toList(),
-        ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PieChart(
+            PieChartData(
+              centerSpaceRadius: 42,
+              sectionsSpace: 3,
+              pieTouchData: PieTouchData(enabled: false),
+              sections: entries.asMap().entries.map((entry) {
+                final index = entry.key;
+                final value = entry.value.value;
+                final color = chartPalette[index % chartPalette.length];
+                final percent = (value / sum) * 100;
+                return PieChartSectionData(
+                  value: value.toDouble(),
+                  color: color,
+                  radius: 58,
+                  title: percent >= 9 ? '${percent.round()}%' : '',
+                  titleStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
+                );
+              }).toList(),
+            ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _compactNumber(sum),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              Text(
+                'Tổng task',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _distributionLegendRow(
+    BuildContext context, {
+    required String label,
+    required int value,
+    required int total,
+    required Color color,
+  }) {
+    final ratio = total <= 0 ? 0.0 : value / total;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _percentageText(ratio * 100),
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: color.withValues(alpha: 0.18),
+                ),
+                child: Text(_compactNumber(value)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 6,
+              value: ratio,
+              valueColor: AlwaysStoppedAnimation(color),
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withValues(alpha: 0.50),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _metricGrid(BuildContext context, List<Widget> tiles) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720 ? 4 : 2;
+        final spacing = 10.0;
+        final tileWidth = (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: tiles
+              .map(
+                (tile) => SizedBox(
+                  width: tileWidth,
+                  child: tile,
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 
@@ -173,6 +297,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     required Map<String, int> values,
   }) {
     final entries = _sortedEntries(values);
+    final total = entries.fold<int>(0, (acc, e) => acc + e.value);
     final chartPalette = _chartPalette(context);
 
     if (entries.isEmpty) {
@@ -202,30 +327,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             final index = item.key;
             final entry = item.value;
             final color = chartPalette[index % chartPalette.length];
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(entry.key, maxLines: 1, overflow: TextOverflow.ellipsis)),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      color: color.withValues(alpha: 0.18),
-                    ),
-                    child: Text(_compactNumber(entry.value)),
-                  ),
-                ],
-              ),
+            return _distributionLegendRow(
+              context,
+              label: entry.key,
+              value: entry.value,
+              total: total,
+              color: color,
             );
           }),
         ],
@@ -234,61 +341,74 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildUserSummary(BuildContext context, UserDashboard dashboard) {
+    final assigned = dashboard.totalAssignedTasks;
+    final completionRate = assigned <= 0
+        ? 0.0
+        : ((dashboard.completedTasks / assigned) * 100).clamp(0, 100).toDouble();
+
     return GlassCard(
       style: GlassCardStyle.spotlight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('My Dashboard', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text('My Dashboard', style: Theme.of(context).textTheme.titleLarge),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.14),
+                ),
+                child: Text(
+                  'Done ${_percentageText(completionRate)}',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
           Text(
             'Thống kê số lượng task cá nhân và trạng thái xử lý hiện tại.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              SizedBox(
-                width: 160,
-                child: _metricTile(
-                  context,
-                  title: 'Được giao',
-                  value: dashboard.totalAssignedTasks.toString(),
-                  icon: Icons.person_add_alt_1,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+          _metricGrid(
+            context,
+            [
+              _metricTile(
+                context,
+                title: 'Được giao',
+                value: dashboard.totalAssignedTasks.toString(),
+                icon: Icons.person_add_alt_1,
+                color: Theme.of(context).colorScheme.primary,
+                subtitle: 'Tổng task của bạn',
               ),
-              SizedBox(
-                width: 160,
-                child: _metricTile(
-                  context,
-                  title: 'Hoàn thành',
-                  value: dashboard.completedTasks.toString(),
-                  icon: Icons.check_circle_outline,
-                  color: _successColor(context),
-                ),
+              _metricTile(
+                context,
+                title: 'Hoàn thành',
+                value: dashboard.completedTasks.toString(),
+                icon: Icons.check_circle_outline,
+                color: _successColor(context),
+                subtitle: 'Đã xử lý xong',
               ),
-              SizedBox(
-                width: 160,
-                child: _metricTile(
-                  context,
-                  title: 'Quá hạn',
-                  value: dashboard.overdueTasks.toString(),
-                  icon: Icons.warning_amber_outlined,
-                  color: Theme.of(context).colorScheme.error,
-                ),
+              _metricTile(
+                context,
+                title: 'Quá hạn',
+                value: dashboard.overdueTasks.toString(),
+                icon: Icons.warning_amber_outlined,
+                color: Theme.of(context).colorScheme.error,
+                subtitle: 'Cần ưu tiên xử lý',
               ),
-              SizedBox(
-                width: 160,
-                child: _metricTile(
-                  context,
-                  title: 'Sắp đến hạn',
-                  value: dashboard.dueSoonTasks.toString(),
-                  icon: Icons.schedule_outlined,
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
+              _metricTile(
+                context,
+                title: 'Sắp đến hạn',
+                value: dashboard.dueSoonTasks.toString(),
+                icon: Icons.schedule_outlined,
+                color: Theme.of(context).colorScheme.secondary,
+                subtitle: 'Chuẩn bị deadline',
               ),
             ],
           ),
@@ -298,16 +418,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildProjectSummary(BuildContext context, ProjectDashboard dashboard) {
-    final completion = dashboard.completionPercentage.clamp(0, 100);
+    final completion = dashboard.completionPercentage.clamp(0, 100).toDouble();
 
     return GlassCard(
       style: GlassCardStyle.liquid,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            dashboard.projectName,
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  dashboard.projectName,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.14),
+                ),
+                child: Text(
+                  _percentageText(completion),
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
@@ -316,7 +453,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             borderRadius: BorderRadius.circular(999),
           ),
           const SizedBox(height: 8),
-          Text('Hoàn thành: ${completion.toStringAsFixed(2)}%'),
+          Text(
+            'Hoàn thành ${completion.toStringAsFixed(2)}% • ${dashboard.completedTasks}/${dashboard.totalTasks} task',
+          ),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -327,6 +466,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   value: dashboard.totalTasks.toString(),
                   icon: Icons.list,
                   color: Theme.of(context).colorScheme.tertiary,
+                  subtitle: 'Khối lượng hiện tại',
                 ),
               ),
               const SizedBox(width: 10),
@@ -337,6 +477,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   value: dashboard.completedTasks.toString(),
                   icon: Icons.verified_outlined,
                   color: _successColor(context),
+                  subtitle: 'Task hoàn tất',
                 ),
               ),
             ],
