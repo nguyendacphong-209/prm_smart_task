@@ -139,11 +139,24 @@ void main() {
       await tester.tap(find.byTooltip('Mời thành viên').first);
       await tester.pumpAndSettle();
 
+      final inviteDialog = find.byType(AlertDialog);
+      final emailField = find.descendant(
+        of: inviteDialog,
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField && widget.decoration?.labelText == 'Email',
+        ),
+      );
+      final submitInviteButton = find.descendant(
+        of: inviteDialog,
+        matching: find.widgetWithText(FilledButton, 'Mời'),
+      );
+
       await tester.enterText(
-        find.byType(TextField).first,
+        emailField,
         'unknown@example.com',
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Mời'));
+      await tester.tap(submitInviteButton);
       await tester.pumpAndSettle();
 
       expect(find.text('Không tìm thấy người dùng'), findsOneWidget);
