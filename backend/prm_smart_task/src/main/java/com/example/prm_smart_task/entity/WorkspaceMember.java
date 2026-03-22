@@ -38,6 +38,13 @@ public class WorkspaceMember {
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invited_by_user_id")
+    private AppUser invitedByUser;
+
     @Column(name = "role", nullable = false, length = 50)
     private String role;
+
+    @Column(name = "invitation_status", nullable = false, length = 50)
+    private String invitationStatus = "accepted";
 }

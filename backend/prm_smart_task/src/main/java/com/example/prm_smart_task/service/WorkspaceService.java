@@ -27,17 +27,24 @@ import com.example.prm_smart_task.repository.WorkspaceRepository;
 @Service
 public class WorkspaceService {
 
+    private static final String INVITATION_STATUS_ACCEPTED = "accepted";
+    private static final String INVITATION_STATUS_PENDING_OWNER_APPROVAL = "pending_owner_approval";
+    private static final String INVITATION_STATUS_REJECTED = "rejected";
+
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final AppUserRepository appUserRepository;
+    private final NotificationService notificationService;
 
     public WorkspaceService(
             WorkspaceRepository workspaceRepository,
             WorkspaceMemberRepository workspaceMemberRepository,
-            AppUserRepository appUserRepository) {
+            AppUserRepository appUserRepository,
+            NotificationService notificationService) {
         this.workspaceRepository = workspaceRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.appUserRepository = appUserRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -54,6 +61,8 @@ public class WorkspaceService {
         ownerMember.setWorkspace(savedWorkspace);
         ownerMember.setUser(owner);
         ownerMember.setRole("owner");
+        ownerMember.setInvitationStatus(INVITATION_STATUS_ACCEPTED);
+        ownerMember.setInvitedByUser(owner);
         workspaceMemberRepository.save(ownerMember);
 
         return mapWorkspace(savedWorkspace, owner.getId());
@@ -116,25 +125,112 @@ public class WorkspaceService {
             UUID workspaceId,
             InviteWorkspaceMemberRequest request) {
         AppUser currentUser = getUserByEmail(currentEmail);
-        Workspace workspace = getOwnerWorkspace(workspaceId, currentUser.getId());
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new BadRequestException("Workspace not found"));
+        boolean invitedByOwner = workspace.getOwner().getId().equals(currentUser.getId());
+
+        if (!invitedByOwner) {
+            WorkspaceMember inviterMember = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
+                    .orElseThrow(() -> new UnauthorizedException("Only workspace owner or admin can invite members"));
+
+            if (!"admin".equalsIgnoreCase(inviterMember.getRole())) {
+                throw new UnauthorizedException("Only workspace owner or admin can invite members");
+            }
+        }
 
         String invitedEmail = request.email().trim().toLowerCase();
         AppUser invitedUser = appUserRepository.findByEmail(invitedEmail)
                 .orElseThrow(() -> new BadRequestException("Invited user does not exist"));
 
-        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, invitedUser.getId())) {
-            throw new BadRequestException("User is already a workspace member");
+        if (workspace.getOwner().getId().equals(invitedUser.getId())) {
+            throw new BadRequestException("User is already a workspace owner");
         }
 
         String role = normalizeMemberRole(request.role());
+
+        WorkspaceMember savedMember;
+        var existingMember = workspaceMemberRepository.findAnyByWorkspaceIdAndUserId(workspaceId, invitedUser.getId());
+        if (existingMember.isPresent()) {
+            WorkspaceMember member = existingMember.get();
+
+            if (INVITATION_STATUS_ACCEPTED.equals(member.getInvitationStatus())) {
+                throw new BadRequestException("User is already a workspace member");
+            }
+
+            if (!invitedByOwner) {
+                throw new BadRequestException("User already has a pending invitation");
+            }
+
+            member.setRole(role);
+            member.setInvitationStatus(INVITATION_STATUS_ACCEPTED);
+            member.setInvitedByUser(currentUser);
+            savedMember = workspaceMemberRepository.save(member);
+            notificationService.notifyWorkspaceInvitationApproved(invitedUser, workspace, currentUser);
+            return mapMember(savedMember);
+        }
 
         WorkspaceMember workspaceMember = new WorkspaceMember();
         workspaceMember.setWorkspace(workspace);
         workspaceMember.setUser(invitedUser);
         workspaceMember.setRole(role);
+        workspaceMember.setInvitedByUser(currentUser);
+        workspaceMember.setInvitationStatus(
+                invitedByOwner ? INVITATION_STATUS_ACCEPTED : INVITATION_STATUS_PENDING_OWNER_APPROVAL);
 
-        WorkspaceMember savedMember = workspaceMemberRepository.save(workspaceMember);
+        savedMember = workspaceMemberRepository.save(workspaceMember);
+        if (invitedByOwner) {
+            notificationService.notifyWorkspaceInvited(invitedUser, workspace, currentUser, true);
+        } else {
+            notificationService.notifyWorkspaceInviteApprovalRequired(
+                    workspace.getOwner(),
+                    workspace,
+                    invitedUser,
+                    currentUser);
+        }
+
         return mapMember(savedMember);
+    }
+
+    @Transactional
+    public WorkspaceMemberResponse approvePendingInvitation(String currentEmail, UUID workspaceId, UUID userId) {
+        AppUser currentUser = getUserByEmail(currentEmail);
+        Workspace workspace = getOwnerWorkspace(workspaceId, currentUser.getId());
+
+        WorkspaceMember member = workspaceMemberRepository.findAnyByWorkspaceIdAndUserId(workspaceId, userId)
+                .orElseThrow(() -> new BadRequestException("Workspace member invitation not found"));
+
+        if (!INVITATION_STATUS_PENDING_OWNER_APPROVAL.equals(member.getInvitationStatus())) {
+            throw new BadRequestException("Invitation is not pending owner approval");
+        }
+
+        member.setInvitationStatus(INVITATION_STATUS_ACCEPTED);
+        WorkspaceMember savedMember = workspaceMemberRepository.save(member);
+        notificationService.notifyWorkspaceInvitationApproved(member.getUser(), workspace, currentUser);
+
+        return mapMember(savedMember);
+    }
+
+    @Transactional
+    public ApiMessageResponse rejectPendingInvitation(String currentEmail, UUID workspaceId, UUID userId) {
+        AppUser currentUser = getUserByEmail(currentEmail);
+        Workspace workspace = getOwnerWorkspace(workspaceId, currentUser.getId());
+
+        WorkspaceMember member = workspaceMemberRepository.findAnyByWorkspaceIdAndUserId(workspaceId, userId)
+                .orElseThrow(() -> new BadRequestException("Workspace member invitation not found"));
+
+        if (!INVITATION_STATUS_PENDING_OWNER_APPROVAL.equals(member.getInvitationStatus())) {
+            throw new BadRequestException("Invitation is not pending owner approval");
+        }
+
+        AppUser invitedByUser = member.getInvitedByUser();
+        member.setInvitationStatus(INVITATION_STATUS_REJECTED);
+        workspaceMemberRepository.delete(member);
+
+        if (invitedByUser != null && !workspace.getOwner().getId().equals(invitedByUser.getId())) {
+            notificationService.notifyWorkspaceInvitationRejected(invitedByUser, workspace, currentUser);
+        }
+
+        return new ApiMessageResponse("Invitation rejected successfully");
     }
 
     @Transactional
@@ -177,12 +273,19 @@ public class WorkspaceService {
     @Transactional(readOnly = true)
     public List<WorkspaceMemberResponse> getWorkspaceMembers(String currentEmail, UUID workspaceId) {
         AppUser currentUser = getUserByEmail(currentEmail);
-        boolean isMember = workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, currentUser.getId());
-        if (!isMember) {
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+            .orElseThrow(() -> new BadRequestException("Workspace not found"));
+        boolean isOwner = workspace.getOwner().getId().equals(currentUser.getId());
+
+        if (!isOwner && !workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, currentUser.getId())) {
             throw new UnauthorizedException("You are not a member of this workspace");
         }
 
-        return workspaceMemberRepository.findByWorkspaceId(workspaceId)
+        List<WorkspaceMember> members = isOwner
+            ? workspaceMemberRepository.findByWorkspaceId(workspaceId)
+            : workspaceMemberRepository.findByWorkspaceIdAndInvitationStatus(workspaceId, INVITATION_STATUS_ACCEPTED);
+
+        return members
                 .stream()
                 .map(this::mapMember)
                 .toList();
@@ -196,7 +299,7 @@ public class WorkspaceService {
             throw new UnauthorizedException("You are not a member of this workspace");
         }
 
-        return workspaceMemberRepository.findByWorkspaceId(workspaceId)
+        return workspaceMemberRepository.findByWorkspaceIdAndInvitationStatus(workspaceId, INVITATION_STATUS_ACCEPTED)
                 .stream()
                 .map(this::mapAssigneeOption)
                 .toList();
@@ -248,7 +351,8 @@ public class WorkspaceService {
                 member.getUser().getEmail(),
                 member.getUser().getFullName(),
                 member.getUser().getAvatarUrl(),
-                member.getRole());
+                member.getRole(),
+                member.getInvitationStatus());
     }
 
     private WorkspaceAssigneeOptionResponse mapAssigneeOption(WorkspaceMember member) {

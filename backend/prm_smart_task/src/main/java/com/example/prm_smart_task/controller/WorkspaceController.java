@@ -115,6 +115,30 @@ public class WorkspaceController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{workspaceId}/members/{userId}/approve")
+    public ResponseEntity<WorkspaceMemberResponse> approveWorkspaceMemberInvitation(
+            Authentication authentication,
+            @PathVariable UUID workspaceId,
+            @PathVariable UUID userId) {
+        WorkspaceMemberResponse response = workspaceService.approvePendingInvitation(
+                authentication.getName(),
+                workspaceId,
+                userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{workspaceId}/members/{userId}/reject")
+    public ResponseEntity<ApiMessageResponse> rejectWorkspaceMemberInvitation(
+            Authentication authentication,
+            @PathVariable UUID workspaceId,
+            @PathVariable UUID userId) {
+        ApiMessageResponse response = workspaceService.rejectPendingInvitation(
+                authentication.getName(),
+                workspaceId,
+                userId);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{workspaceId}/members/{userId}")
     public ResponseEntity<ApiMessageResponse> removeWorkspaceMember(
             Authentication authentication,

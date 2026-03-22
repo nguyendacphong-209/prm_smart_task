@@ -38,6 +38,12 @@ public class Notification {
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "workspace_id")
+    private UUID workspaceId;
+
+    @Column(name = "target_user_id")
+    private UUID targetUserId;
+
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
 

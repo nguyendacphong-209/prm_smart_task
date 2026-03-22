@@ -9,6 +9,7 @@ public record WorkspaceMemberResponse(
         String email,
         String fullName,
         String avatarUrl,
-        String role
+        String role,
+        String invitationStatus
 ) {
 }

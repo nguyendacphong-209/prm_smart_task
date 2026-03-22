@@ -8,6 +8,8 @@ public record NotificationResponse(
         String type,
         String content,
         boolean isRead,
+        UUID workspaceId,
+        UUID targetUserId,
         LocalDateTime createdAt
 ) {
 }
