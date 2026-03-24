@@ -21,6 +21,12 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven {
+		url "https://jcenter.bintray.com"
+	}
+	maven {
+		url "https://maven.cloudinary.com/releases"
+	}
 }
 
 dependencies {
@@ -29,7 +35,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-	implementation 'com.cloudinary:cloudinary-http44:1.36.1'
+	implementation 'com.cloudinary:cloudinary-core:1.35.0'
 	implementation 'net.coobird:thumbnailator:0.4.20'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
