@@ -21,6 +21,9 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
+import com.example.prm_smart_task.feature.project.entity.Project;
+import com.example.prm_smart_task.feature.user.entity.AppUser;
+
 @Entity
 @Table(name = "tasks")
 @Getter

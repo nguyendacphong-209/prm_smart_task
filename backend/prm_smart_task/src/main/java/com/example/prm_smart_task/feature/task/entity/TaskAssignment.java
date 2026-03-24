@@ -13,6 +13,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
+import com.example.prm_smart_task.feature.user.entity.AppUser;
+
 @Entity
 @Table(
     name = "task_assignments",

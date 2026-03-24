@@ -17,6 +17,8 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.example.prm_smart_task.feature.workspace.entity.Workspace;
+
 @Entity
 @Table(name = "projects")
 @Getter

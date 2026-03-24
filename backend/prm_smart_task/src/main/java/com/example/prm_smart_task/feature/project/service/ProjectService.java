@@ -20,6 +20,8 @@ import com.example.prm_smart_task.feature.shared.exception.BadRequestException;
 import com.example.prm_smart_task.feature.shared.exception.UnauthorizedException;
 import com.example.prm_smart_task.feature.user.repository.AppUserRepository;
 import com.example.prm_smart_task.feature.project.repository.ProjectRepository;
+import com.example.prm_smart_task.feature.task.repository.LabelRepository;
+import com.example.prm_smart_task.feature.task.repository.TaskStatusRepository;
 import com.example.prm_smart_task.feature.workspace.repository.WorkspaceMemberRepository;
 import com.example.prm_smart_task.feature.workspace.repository.WorkspaceRepository;
 

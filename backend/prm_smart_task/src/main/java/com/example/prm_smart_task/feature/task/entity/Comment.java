@@ -1,10 +1,12 @@
-package com.example.prm_smart_task.feature.notification.entity;
+package com.example.prm_smart_task.feature.task.entity;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UuidGenerator;
+
+import com.example.prm_smart_task.feature.user.entity.AppUser;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,13 +19,11 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.example.prm_smart_task.feature.user.entity.AppUser;
-
 @Entity
-@Table(name = "notifications")
+@Table(name = "comments")
 @Getter
 @Setter
-public class Notification {
+public class Comment {
 
     @Id
     @GeneratedValue
@@ -31,23 +31,15 @@ public class Notification {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id", nullable = false)
+    private Task task;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private AppUser user;
 
-    @Column(name = "type", length = 50)
-    private String type;
-
-    @Column(name = "content", columnDefinition = "TEXT")
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
-
-    @Column(name = "workspace_id")
-    private UUID workspaceId;
-
-    @Column(name = "target_user_id")
-    private UUID targetUserId;
-
-    @Column(name = "is_read", nullable = false)
-    private boolean isRead;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

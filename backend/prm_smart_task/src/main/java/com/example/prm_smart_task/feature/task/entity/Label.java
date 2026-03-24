@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.example.prm_smart_task.feature.project.entity.Project;
+import com.example.prm_smart_task.feature.user.entity.AppUser;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,10 +19,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "task_statuses")
+@Table(name = "labels")
 @Getter
 @Setter
-public class TaskStatus {
+public class Label {
 
     @Id
     @GeneratedValue
@@ -32,9 +33,13 @@ public class TaskStatus {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", length = 100)
     private String name;
 
-    @Column(name = "position", nullable = false)
-    private Integer position;
+    @Column(name = "color", length = 20)
+    private String color;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private AppUser createdBy;
 }

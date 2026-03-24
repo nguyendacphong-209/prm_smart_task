@@ -16,6 +16,8 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.example.prm_smart_task.feature.user.entity.AppUser;
+
 @Entity
 @Table(
         name = "workspace_members",

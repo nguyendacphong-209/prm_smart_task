@@ -14,13 +14,13 @@ import com.example.prm_smart_task.dto.collaboration.CommentResponse;
 import com.example.prm_smart_task.dto.collaboration.CreateCommentRequest;
 import com.example.prm_smart_task.feature.user.entity.AppUser;
 import com.example.prm_smart_task.feature.task.entity.Attachment;
-import com.example.prm_smart_task.entity.Comment;
+import com.example.prm_smart_task.feature.task.entity.Comment;
 import com.example.prm_smart_task.feature.task.entity.Task;
 import com.example.prm_smart_task.feature.shared.exception.BadRequestException;
 import com.example.prm_smart_task.feature.shared.exception.UnauthorizedException;
 import com.example.prm_smart_task.feature.user.repository.AppUserRepository;
 import com.example.prm_smart_task.feature.task.repository.AttachmentRepository;
-import com.example.prm_smart_task.repository.CommentRepository;
+import com.example.prm_smart_task.feature.task.repository.CommentRepository;
 import com.example.prm_smart_task.feature.task.repository.TaskRepository;
 import com.example.prm_smart_task.feature.workspace.repository.WorkspaceMemberRepository;
 
