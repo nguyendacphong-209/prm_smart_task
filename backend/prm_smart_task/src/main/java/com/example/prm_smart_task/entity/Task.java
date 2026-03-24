@@ -76,4 +76,7 @@ public class Task {
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Attachment> attachments = new HashSet<>();
+
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
 }
