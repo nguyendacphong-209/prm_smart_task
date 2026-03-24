@@ -341,6 +341,7 @@ public class WorkspaceService {
                 workspace.getOwner().getId(),
                 workspace.getOwner().getEmail(),
                 myRole,
+            workspace.getImageUrl(),
                 workspace.getCreatedAt());
     }
 

@@ -12,6 +12,7 @@ public record TaskResponse(
         String description,
         String priority,
         LocalDateTime deadline,
+        String imageUrl,
         UUID createdBy,
         LocalDateTime createdAt,
         List<TaskAssigneeResponse> assignees,

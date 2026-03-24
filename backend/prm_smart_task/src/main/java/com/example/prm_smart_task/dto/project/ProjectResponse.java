@@ -8,6 +8,7 @@ public record ProjectResponse(
         UUID workspaceId,
         String name,
         String description,
+        String imageUrl,
         LocalDateTime createdAt
 ) {
 }

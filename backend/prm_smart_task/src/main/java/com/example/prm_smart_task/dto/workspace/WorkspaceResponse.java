@@ -9,6 +9,7 @@ public record WorkspaceResponse(
         UUID ownerId,
         String ownerEmail,
         String myRole,
+        String imageUrl,
         LocalDateTime createdAt
 ) {
 }

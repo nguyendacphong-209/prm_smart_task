@@ -139,6 +139,7 @@ public class CollaborationService {
                 comment.getUser().getId(),
                 comment.getUser().getEmail(),
                 comment.getUser().getFullName(),
+            comment.getUser().getAvatarUrl(),
                 comment.getContent(),
                 extractMentions(comment.getContent()),
                 comment.getCreatedAt());

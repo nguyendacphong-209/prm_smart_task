@@ -10,6 +10,7 @@ public record CommentResponse(
         UUID userId,
         String userEmail,
         String userFullName,
+        String userAvatarUrl,
         String content,
         List<String> mentionedEmails,
         LocalDateTime createdAt

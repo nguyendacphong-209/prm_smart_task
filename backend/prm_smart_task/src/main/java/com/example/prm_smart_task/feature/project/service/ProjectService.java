@@ -177,6 +177,7 @@ public class ProjectService {
                 project.getWorkspace().getId(),
                 project.getName(),
                 project.getDescription(),
+            project.getImageUrl(),
                 project.getCreatedAt());
     }
 

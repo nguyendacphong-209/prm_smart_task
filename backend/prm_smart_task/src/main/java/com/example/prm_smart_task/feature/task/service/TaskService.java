@@ -294,6 +294,7 @@ public class TaskService {
                 task.getDescription(),
                 task.getPriority(),
                 task.getDeadline(),
+            task.getImageUrl(),
                 task.getCreatedBy() == null ? null : task.getCreatedBy().getId(),
                 task.getCreatedAt(),
                 assignees,
