@@ -36,6 +36,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	implementation 'com.cloudinary:cloudinary-core:1.35.0'
+	implementation 'com.cloudinary:cloudinary-http45:1.35.0'
 	implementation 'net.coobird:thumbnailator:0.4.20'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
