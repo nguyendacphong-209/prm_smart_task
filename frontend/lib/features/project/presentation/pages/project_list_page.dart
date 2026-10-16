@@ -9,6 +9,8 @@ import 'package:prm_smart_task/shared/widgets/empty_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/error_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/glass_card.dart';
 import 'package:prm_smart_task/shared/widgets/skeleton_loading.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:prm_smart_task/shared/application/controllers/image_upload_controller.dart';
 
 class ProjectListPage extends ConsumerStatefulWidget {
   const ProjectListPage({super.key, required this.workspaceId});
@@ -48,13 +50,16 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
   Future<void> _showProjectDialog({Project? project}) async {
     var name = project?.name ?? '';
     var description = project?.description ?? '';
+    var uploadedImageUrl = '';
 
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) => AlertDialog(
             title: Text(project == null ? 'Tạo project' : 'Cập nhật project'),
-            content: Column(
+            content: SingleChildScrollView(
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
@@ -75,7 +80,68 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
                     prefixIcon: Icon(Icons.notes_rounded),
                   ),
                 ),
+                if (project != null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.image,
+                          withData: true,
+                        );
+
+                        if (result == null || result.files.isEmpty) return;
+
+                        final file = result.files.first;
+                        final bytes = file.bytes;
+
+                        if (bytes == null || bytes.isEmpty) {
+                          if (mounted) {
+                            _showSnack('Không đọc được dữ liệu file');
+                          }
+                          return;
+                        }
+
+                        if (!mounted) return;
+
+                        final success = await ref
+                            .read(imageUploadControllerProvider.notifier)
+                            .uploadProjectImage(
+                              project.id,
+                              bytes,
+                              file.name,
+                            );
+
+                        if (!mounted) return;
+
+                        final uploadState = ref.read(imageUploadControllerProvider);
+                        if (success && uploadState.uploadedImageUrl != null) {
+                          uploadedImageUrl = uploadState.uploadedImageUrl!;
+                          setDialogState(() {});
+                          _showSnack('Upload ảnh project thành công');
+                        } else {
+                          _showSnack(
+                            uploadState.errorMessage ??
+                                'Upload ảnh project thất bại',
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.image),
+                      label: const Text('Chọn ảnh project'),
+                    ),
+                  ),
+                  if (uploadedImageUrl.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Ảnh đã chọn: ${uploadedImageUrl.split('/').last}',
+                        style: Theme.of(dialogContext).textTheme.bodySmall,
+                      ),
+                    ),
+                ],
               ],
+            ),
             ),
             actions: [
               TextButton(
@@ -125,7 +191,8 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
                 child: Text(project == null ? 'Tạo' : 'Lưu'),
               ),
             ],
-          );
+          ),
+        );
       },
     );
   }
@@ -247,6 +314,29 @@ class _ProjectListPageState extends ConsumerState<ProjectListPage> {
                                   children: [
                                     Row(
                                       children: [
+                                        Builder(
+                                          builder: (_) {
+                                            final rawImageUrl = project.imageUrl?.trim();
+                                            final hasImage =
+                                                rawImageUrl != null && rawImageUrl.isNotEmpty;
+                                            final fallbackInitial = project.name.trim().isNotEmpty
+                                                ? project.name.trim().substring(0, 1).toUpperCase()
+                                                : '?';
+                                            return CircleAvatar(
+                                              radius: 20,
+                                              backgroundImage:
+                                                  hasImage ? NetworkImage(rawImageUrl) : null,
+                                              onBackgroundImageError:
+                                                  hasImage
+                                                    ? (error, stackTrace) {}
+                                                    : null,
+                                              child: hasImage
+                                                  ? null
+                                                  : Text(fallbackInitial),
+                                            );
+                                          },
+                                        ),
+                                        const SizedBox(width: 10),
                                         Expanded(
                                           child: Text(
                                             project.name,

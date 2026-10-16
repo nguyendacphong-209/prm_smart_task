@@ -16,6 +16,7 @@ import 'package:prm_smart_task/features/task/domain/entities/task_status_option.
 import 'package:prm_smart_task/features/task/presentation/widgets/task_form_dialog.dart';
 import 'package:prm_smart_task/features/workspace/application/providers/workspace_providers.dart';
 import 'package:prm_smart_task/features/workspace/domain/entities/workspace_member.dart';
+import 'package:prm_smart_task/shared/application/controllers/image_upload_controller.dart';
 import 'package:prm_smart_task/shared/widgets/empty_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/error_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/glass_card.dart';
@@ -153,6 +154,33 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       success
           ? 'Upload file thành công'
           : (collabState.errorMessage ?? 'Upload file thất bại'),
+    );
+  }
+
+  Future<void> _pickAndUploadTaskImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      _showSnack('Không đọc được dữ liệu file');
+      return;
+    }
+
+    final success = await ref
+        .read(imageUploadControllerProvider.notifier)
+        .uploadTaskImage(widget.taskId, bytes, file.name);
+
+    if (!mounted) return;
+    final uploadState = ref.read(imageUploadControllerProvider);
+    _showSnack(
+      success
+          ? 'Upload ảnh task thành công'
+          : (uploadState.errorMessage ?? 'Upload ảnh task thất bại'),
     );
   }
 
@@ -710,6 +738,15 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton.icon(
+                                      onPressed: _pickAndUploadTaskImage,
+                                      icon: const Icon(Icons.image_outlined),
+                                      label: const Text('Upload ảnh task (Cloudinary)'),
+                                    ),
+                                  ),
                                   if (collaborationState.errorMessage != null) ...[
                                     const SizedBox(height: 8),
                                     Text(
@@ -848,6 +885,23 @@ class _CommentItem extends StatelessWidget {
         children: [
           Row(
             children: [
+              Builder(
+                builder: (_) {
+                  final rawAvatarUrl = comment.userAvatarUrl?.trim();
+                  final hasAvatar = rawAvatarUrl != null && rawAvatarUrl.isNotEmpty;
+                  final fallbackInitial = comment.displayName.trim().isNotEmpty
+                      ? comment.displayName.trim().substring(0, 1).toUpperCase()
+                      : '?';
+
+                  return CircleAvatar(
+                    radius: 16,
+                    backgroundImage: hasAvatar ? NetworkImage(rawAvatarUrl) : null,
+                    onBackgroundImageError: hasAvatar ? (error, stackTrace) {} : null,
+                    child: hasAvatar ? null : Text(fallbackInitial),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   comment.displayName,

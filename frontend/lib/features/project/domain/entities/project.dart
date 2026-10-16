@@ -4,6 +4,7 @@ class Project {
     required this.workspaceId,
     required this.name,
     this.description,
+    this.imageUrl,
     this.createdAt,
   });
 
@@ -11,5 +12,6 @@ class Project {
   final String workspaceId;
   final String name;
   final String? description;
+  final String? imageUrl;
   final DateTime? createdAt;
 }

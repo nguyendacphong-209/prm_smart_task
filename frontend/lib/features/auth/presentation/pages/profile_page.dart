@@ -21,6 +21,7 @@ class ProfilePage extends ConsumerWidget {
     return AuthScreenContainer(
       title: 'Hồ sơ cá nhân',
       subtitle: 'Quản lý thông tin tài khoản và bảo mật',
+      icon: Icons.account_circle_rounded,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,6 +43,26 @@ class ProfilePage extends ConsumerWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.center,
+                  child: _ProfileAvatar(avatarUrl: user?.avatarUrl),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: const [
+                    _ProfilePill(
+                      icon: Icons.lock_outline_rounded,
+                      label: 'Secure',
+                    ),
+                    _ProfilePill(
+                      icon: Icons.auto_awesome_rounded,
+                      label: 'Liquid UI',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Icon(
@@ -90,9 +111,7 @@ class ProfilePage extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        isDarkMode ? 'Dark mode' : 'Light mode',
-                      ),
+                      child: Text(isDarkMode ? 'Dark mode' : 'Light mode'),
                     ),
                     Switch(
                       value: isDarkMode,
@@ -108,42 +127,55 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonalIcon(
-              onPressed: () => context.push('/profile/edit'),
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Cập nhật hồ sơ cá nhân'),
+          GlassCard(
+            style: GlassCardStyle.liquid,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hành động nhanh',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonalIcon(
+                    onPressed: () => context.push('/profile/edit'),
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Cập nhật hồ sơ cá nhân'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonalIcon(
+                    onPressed: () => context.push('/profile/change-password'),
+                    icon: const Icon(Icons.lock_reset_rounded),
+                    label: const Text('Đổi mật khẩu'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      await ref.read(authControllerProvider.notifier).refreshMe();
+                      if (!context.mounted) return;
+                      final newState = ref.read(authControllerProvider);
+                      if (newState.errorMessage != null) {
+                        showAppSnack(newState.errorMessage!);
+                      }
+                    },
+                    child: const Text('Làm mới hồ sơ'),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            child: FilledButton.tonalIcon(
-              onPressed: () => context.push('/profile/change-password'),
-              icon: const Icon(Icons.lock_reset_rounded),
-              label: const Text('Đổi mật khẩu'),
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () async {
-                await ref.read(authControllerProvider.notifier).refreshMe();
-                if (!context.mounted) return;
-                final newState = ref.read(authControllerProvider);
-                if (newState.errorMessage != null) {
-                  showAppSnack(newState.errorMessage!);
-                }
-              },
-              child: const Text('Làm mới hồ sơ'),
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.tonalIcon(
+            child: FilledButton.icon(
               onPressed: () async {
                 await ref.read(authControllerProvider.notifier).logout();
                 if (!context.mounted) return;
@@ -153,6 +185,99 @@ class ProfilePage extends ConsumerWidget {
               label: const Text('Đăng xuất'),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({required this.avatarUrl});
+
+  final String? avatarUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = avatarUrl?.trim();
+    final hasAvatar = url != null && url.isNotEmpty;
+
+    return Container(
+      width: 84,
+      height: 84,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.55),
+            Theme.of(context).colorScheme.secondary.withValues(alpha: 0.35),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.20),
+            blurRadius: 20,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: hasAvatar
+            ? Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _avatarFallback(context),
+              )
+            : _avatarFallback(context),
+      ),
+    );
+  }
+
+  Widget _avatarFallback(BuildContext context) {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Icon(
+        Icons.person,
+        size: 38,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+}
+
+class _ProfilePill extends StatelessWidget {
+  const _ProfilePill({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.10),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.8),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 5),
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
         ],
       ),
     );

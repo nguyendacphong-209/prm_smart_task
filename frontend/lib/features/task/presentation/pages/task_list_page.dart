@@ -341,6 +341,29 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                                     children: [
                                       Row(
                                         children: [
+                                          Builder(
+                                            builder: (_) {
+                                              final rawImageUrl = task.imageUrl?.trim();
+                                              final hasImage =
+                                                  rawImageUrl != null && rawImageUrl.isNotEmpty;
+                                              final fallbackInitial = task.title.trim().isNotEmpty
+                                                  ? task.title.trim().substring(0, 1).toUpperCase()
+                                                  : '?';
+                                              return CircleAvatar(
+                                                radius: 20,
+                                                backgroundImage:
+                                                    hasImage ? NetworkImage(rawImageUrl) : null,
+                                                onBackgroundImageError:
+                                                  hasImage
+                                                    ? (error, stackTrace) {}
+                                                    : null,
+                                                child: hasImage
+                                                    ? null
+                                                    : Text(fallbackInitial),
+                                              );
+                                            },
+                                          ),
+                                          const SizedBox(width: 10),
                                           Expanded(
                                             child: Text(
                                               task.title,

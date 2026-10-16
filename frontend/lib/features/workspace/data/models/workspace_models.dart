@@ -7,6 +7,7 @@ class WorkspaceModel {
     required this.name,
     required this.ownerId,
     required this.myRole,
+    this.imageUrl,
     required this.createdAt,
   });
 
@@ -14,6 +15,7 @@ class WorkspaceModel {
   final String name;
   final String ownerId;
   final String myRole;
+  final String? imageUrl;
   final DateTime? createdAt;
 
   factory WorkspaceModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class WorkspaceModel {
       name: json['name']?.toString() ?? '',
       ownerId: json['ownerId']?.toString() ?? '',
       myRole: json['myRole']?.toString() ?? 'member',
+      imageUrl: json['imageUrl']?.toString(),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
     );
   }
@@ -32,6 +35,7 @@ class WorkspaceModel {
       name: name,
       ownerId: ownerId,
       myRole: myRole,
+      imageUrl: imageUrl,
       createdAt: createdAt,
     );
   }

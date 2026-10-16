@@ -4,6 +4,7 @@ class Workspace {
     required this.name,
     required this.ownerId,
     required this.myRole,
+    this.imageUrl,
     required this.createdAt,
   });
 
@@ -11,5 +12,6 @@ class Workspace {
   final String name;
   final String ownerId;
   final String myRole;
+  final String? imageUrl;
   final DateTime? createdAt;
 }

@@ -11,6 +11,7 @@ class TaskModel {
     this.statusId,
     this.description,
     this.deadline,
+    this.imageUrl,
     this.createdAt,
     this.assignees = const [],
     this.labels = const [],
@@ -23,6 +24,7 @@ class TaskModel {
   final String? description;
   final String priority;
   final DateTime? deadline;
+  final String? imageUrl;
   final DateTime? createdAt;
   final List<TaskAssigneeDetailModel> assignees;
   final List<TaskLabelDetailModel> labels;
@@ -62,6 +64,7 @@ class TaskModel {
       description: json['description']?.toString(),
       priority: (json['priority']?.toString() ?? 'medium').toLowerCase(),
       deadline: DateTime.tryParse(json['deadline']?.toString() ?? ''),
+      imageUrl: json['imageUrl']?.toString(),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
       assignees: parseAssignees(json['assignees']),
       labels: parseLabels(json['labels']),
@@ -77,6 +80,7 @@ class TaskModel {
       description: description,
       priority: priority,
       deadline: deadline,
+      imageUrl: imageUrl,
       createdAt: createdAt,
       assignees: assignees.map((a) => a.toEntity()).toList(),
       labels: labels.map((l) => l.toEntity()).toList(),

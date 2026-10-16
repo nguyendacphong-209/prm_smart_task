@@ -16,6 +16,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  bool _isValidEmail(String value) {
+    return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value);
+  }
 
   @override
   void dispose() {
@@ -52,8 +57,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return AuthScreenContainer(
       title: 'Đăng nhập',
       subtitle: 'Tiếp tục trải nghiệm quản lý công việc mượt mà',
+      icon: Icons.login_rounded,
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -72,46 +79,81 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               validator: (value) {
                 final v = value?.trim() ?? '';
                 if (v.isEmpty) return 'Vui lòng nhập email';
-                if (!v.contains('@')) return 'Email không hợp lệ';
+                if (!_isValidEmail(v)) return 'Email không hợp lệ';
                 return null;
               },
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _passwordController,
-              obscureText: true,
+              obscureText: _obscurePassword,
               decoration: const InputDecoration(
                 labelText: 'Mật khẩu',
                 prefixIcon: Icon(Icons.lock_outline_rounded),
+              ).copyWith(
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
               ),
               validator: (value) {
                 if ((value ?? '').isEmpty) return 'Vui lòng nhập mật khẩu';
                 return null;
               },
             ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _InfoPill(
+                  icon: Icons.shield_outlined,
+                  label: 'Secure JWT',
+                ),
+                _InfoPill(
+                  icon: Icons.flash_on_outlined,
+                  label: 'Quick Access',
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: FilledButton.icon(
                 onPressed: state.isLoading ? null : _submit,
-                child: state.isLoading
+                icon: state.isLoading
                     ? const SizedBox(
-                        width: 18,
-                        height: 18,
+                        width: 16,
+                        height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Đăng nhập'),
+                    : const Icon(Icons.arrow_forward_rounded),
+                  label: Text(state.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'),
               ),
             ),
-            if (state.errorMessage != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                state.errorMessage!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-              ),
-            ],
+            const SizedBox(height: 10),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              child: state.errorMessage == null
+                  ? const SizedBox.shrink()
+                  : Text(
+                      state.errorMessage!,
+                      key: ValueKey(state.errorMessage),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+            ),
             const SizedBox(height: 12),
             Center(
               child: TextButton(
@@ -121,6 +163,45 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.10),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.8),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+        ],
       ),
     );
   }

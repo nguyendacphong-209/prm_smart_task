@@ -73,4 +73,18 @@ class ApiConstants {
 
     static String dashboardProject(String projectId) =>
         '/api/dashboard/projects/$projectId';
+
+    // Image uploads
+    static const String avatarUpload = '/api/avatars/upload';
+    
+    static String workspaceImageUpload(String workspaceId) =>
+        '/api/images/workspace/$workspaceId/upload';
+    
+    static String projectImageUpload(String projectId) =>
+        '/api/images/project/$projectId/upload';
+    
+    static String taskImageUpload(String taskId) =>
+        '/api/images/task/$taskId/upload';
+    
+    static const String imageDelete = '/api/images/delete';
 }

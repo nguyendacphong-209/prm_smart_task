@@ -235,14 +235,24 @@ class _WorkspaceListPageState extends ConsumerState<WorkspaceListPage> {
                                   onTap: () => context.push('/workspaces/${workspace.id}'),
                                   child: Row(
                                     children: [
-                                      CircleAvatar(
-                                        radius: 20,
-                                        child: Text(
-                                          workspace.name
-                                              .trim()
-                                              .substring(0, 1)
-                                              .toUpperCase(),
-                                        ),
+                                      Builder(
+                                        builder: (_) {
+                                          final rawImageUrl = workspace.imageUrl?.trim();
+                                          final hasImage = rawImageUrl != null && rawImageUrl.isNotEmpty;
+                                          final fallbackInitial = workspace.name.trim().isNotEmpty
+                                              ? workspace.name.trim().substring(0, 1).toUpperCase()
+                                              : '?';
+                                          return CircleAvatar(
+                                            radius: 20,
+                                            backgroundImage:
+                                                hasImage ? NetworkImage(rawImageUrl) : null,
+                                            onBackgroundImageError:
+                                              hasImage ? (error, stackTrace) {} : null,
+                                            child: hasImage
+                                                ? null
+                                                : Text(fallbackInitial),
+                                          );
+                                        },
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(

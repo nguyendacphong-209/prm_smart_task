@@ -6,6 +6,7 @@ class ProjectModel {
     required this.workspaceId,
     required this.name,
     this.description,
+    this.imageUrl,
     this.createdAt,
   });
 
@@ -13,6 +14,7 @@ class ProjectModel {
   final String workspaceId;
   final String name;
   final String? description;
+  final String? imageUrl;
   final DateTime? createdAt;
 
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
@@ -21,6 +23,7 @@ class ProjectModel {
       workspaceId: json['workspaceId']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       description: json['description']?.toString(),
+      imageUrl: json['imageUrl']?.toString(),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
     );
   }
@@ -31,6 +34,7 @@ class ProjectModel {
       workspaceId: workspaceId,
       name: name,
       description: description,
+      imageUrl: imageUrl,
       createdAt: createdAt,
     );
   }

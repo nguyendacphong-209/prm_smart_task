@@ -5,6 +5,7 @@ class TaskComment {
     required this.userId,
     required this.userEmail,
     required this.userFullName,
+    this.userAvatarUrl,
     required this.content,
     required this.mentionedEmails,
     required this.createdAt,
@@ -15,6 +16,7 @@ class TaskComment {
   final String userId;
   final String userEmail;
   final String userFullName;
+  final String? userAvatarUrl;
   final String content;
   final List<String> mentionedEmails;
   final DateTime? createdAt;

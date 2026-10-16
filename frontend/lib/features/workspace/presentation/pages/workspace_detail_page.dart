@@ -10,6 +10,8 @@ import 'package:prm_smart_task/shared/widgets/empty_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/error_state_view.dart';
 import 'package:prm_smart_task/shared/widgets/glass_card.dart';
 import 'package:prm_smart_task/shared/widgets/skeleton_loading.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:prm_smart_task/shared/application/controllers/image_upload_controller.dart';
 
 class WorkspaceDetailPage extends ConsumerStatefulWidget {
   const WorkspaceDetailPage({super.key, required this.workspaceId});
@@ -50,54 +52,128 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
     required String workspaceId,
     required String currentName,
   }) async {
+    var uploadedImageUrl = '';
     var nextName = currentName;
 
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-          title: const Text('Sửa workspace'),
-          content: TextFormField(
-            initialValue: currentName,
-            onChanged: (value) => nextName = value,
-            decoration: const InputDecoration(
-              labelText: 'Tên workspace',
-              prefixIcon: Icon(Icons.edit_outlined),
-            ),
+        title: const Text('Sửa workspace'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                initialValue: currentName,
+                onChanged: (value) => nextName = value,
+                decoration: const InputDecoration(
+                  labelText: 'Tên workspace',
+                  prefixIcon: Icon(Icons.edit_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              StatefulBuilder(
+                builder: (statefulContext, setState) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final result = await FilePicker.platform.pickFiles(
+                            type: FileType.image,
+                            withData: true,
+                          );
+
+                          if (result == null || result.files.isEmpty) return;
+
+                          final file = result.files.first;
+                          final bytes = file.bytes;
+
+                          if (bytes == null || bytes.isEmpty) {
+                            if (mounted) {
+                              _showSnack('Không đọc được dữ liệu file');
+                            }
+                            return;
+                          }
+
+                          if (!mounted) return;
+
+                          final success = await ref
+                              .read(imageUploadControllerProvider.notifier)
+                              .uploadWorkspaceImage(
+                                workspaceId,
+                                bytes,
+                                file.name,
+                              );
+
+                          if (!mounted) return;
+
+                          final uploadState =
+                              ref.read(imageUploadControllerProvider);
+                          if (success && uploadState.uploadedImageUrl != null) {
+                            uploadedImageUrl = uploadState.uploadedImageUrl!;
+                            setState(() {});
+                            _showSnack('Upload ảnh workspace thành công');
+                          } else {
+                            _showSnack(
+                              uploadState.errorMessage ??
+                                  'Upload ảnh workspace thất bại',
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.image),
+                        label: const Text('Chọn ảnh workspace'),
+                      ),
+                    ),
+                    if (uploadedImageUrl.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Ảnh đã chọn: ${uploadedImageUrl.split('/').last}',
+                          style: Theme.of(dialogContext).textTheme.bodySmall,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Hủy'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final navigator = Navigator.of(dialogContext);
-
-                final trimmedName = nextName.trim();
-                if (trimmedName.length < 3) {
-                  _showSnack('Tên workspace tối thiểu 3 ký tự');
-                  return;
-                }
-
-                navigator.pop();
-
-                final success = await ref
-                    .read(workspaceControllerProvider.notifier)
-                    .updateWorkspace(workspaceId: workspaceId, name: trimmedName);
-
-                if (!mounted) return;
-
-                final state = ref.read(workspaceControllerProvider);
-                _showSnack(
-                  success
-                      ? 'Cập nhật workspace thành công'
-                      : (state.errorMessage ?? 'Không thể cập nhật workspace'),
-                );
-              },
-              child: const Text('Lưu'),
-            ),
-          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final navigator = Navigator.of(dialogContext);
+
+              final trimmedName = nextName.trim();
+              if (trimmedName.length < 3) {
+                _showSnack('Tên workspace tối thiểu 3 ký tự');
+                return;
+              }
+
+              navigator.pop();
+
+              final success = await ref
+                  .read(workspaceControllerProvider.notifier)
+                  .updateWorkspace(workspaceId: workspaceId, name: trimmedName);
+
+              if (!mounted) return;
+
+              final state = ref.read(workspaceControllerProvider);
+              _showSnack(
+                success
+                    ? 'Cập nhật workspace thành công'
+                    : (state.errorMessage ?? 'Không thể cập nhật workspace'),
+              );
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -480,138 +556,148 @@ class _WorkspaceDetailPageState extends ConsumerState<WorkspaceDetailPage> {
                           )
                         else
                           ...state.members.map(
-                            (member) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: GlassCard(
-                                style: GlassCardStyle.liquid,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.16),
-                                      foregroundColor:
-                                          Theme.of(context).colorScheme.primary,
-                                      child: Text(
-                                        (member.fullName.isNotEmpty
-                                                ? member.fullName
-                                                : member.email)
-                                            .trim()
-                                            .substring(0, 1)
-                                            .toUpperCase(),
+                            (member) {
+                              final avatarUrl = member.avatarUrl?.trim();
+                              final hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: GlassCard(
+                                  style: GlassCardStyle.liquid,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.16),
+                                        foregroundColor:
+                                            Theme.of(context).colorScheme.primary,
+                                        backgroundImage: hasAvatar
+                                            ? NetworkImage(avatarUrl)
+                                            : null,
+                                        child: hasAvatar
+                                            ? null
+                                            : Text(
+                                                (member.fullName.isNotEmpty
+                                                        ? member.fullName
+                                                        : member.email)
+                                                    .trim()
+                                                    .substring(0, 1)
+                                                    .toUpperCase(),
+                                              ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              member.fullName.isEmpty
+                                                  ? member.email
+                                                  : member.fullName,
+                                              style: Theme.of(context).textTheme.titleSmall,
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              member.email,
+                                              style: Theme.of(context).textTheme.bodySmall,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
-                                          Text(
-                                            member.fullName.isEmpty
-                                                ? member.email
-                                                : member.fullName,
-                                            style: Theme.of(context).textTheme.titleSmall,
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            member.email,
-                                            style: Theme.of(context).textTheme.bodySmall,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(999),
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary
-                                                .withValues(alpha: 0.12),
-                                          ),
-                                          child: Text(
-                                            _memberRoleLabel(member.role),
-                                            style: Theme.of(context).textTheme.labelMedium,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(999),
-                                            color: member.isPendingOwnerApproval
-                                                ? Theme.of(context)
-                                                    .colorScheme
-                                                    .secondary
-                                                    .withValues(alpha: 0.2)
-                                                : Theme.of(context)
-                                                    .colorScheme
-                                                    .tertiary
-                                                    .withValues(alpha: 0.18),
-                                          ),
-                                          child: Text(
-                                            _invitationStatusLabel(member.invitationStatus),
-                                            style: Theme.of(context).textTheme.labelSmall,
-                                          ),
-                                        ),
-                                        if (member.isPendingOwnerApproval && isOwner) ...[
-                                          const SizedBox(height: 8),
-                                          FilledButton.tonal(
-                                            onPressed: state.isSubmitting
-                                                ? null
-                                                : () => _approveMemberInvitation(member),
-                                            child: const Text('Duyệt'),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(999),
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.12),
+                                            ),
+                                            child: Text(
+                                              _memberRoleLabel(member.role),
+                                              style: Theme.of(context).textTheme.labelMedium,
+                                            ),
                                           ),
                                           const SizedBox(height: 6),
-                                          TextButton(
-                                            onPressed: state.isSubmitting
-                                                ? null
-                                                : () => _rejectMemberInvitation(member),
-                                            child: const Text('Từ chối'),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.circular(999),
+                                              color: member.isPendingOwnerApproval
+                                                  ? Theme.of(context)
+                                                      .colorScheme
+                                                      .secondary
+                                                      .withValues(alpha: 0.2)
+                                                  : Theme.of(context)
+                                                      .colorScheme
+                                                      .tertiary
+                                                      .withValues(alpha: 0.18),
+                                            ),
+                                            child: Text(
+                                              _invitationStatusLabel(member.invitationStatus),
+                                              style: Theme.of(context).textTheme.labelSmall,
+                                            ),
                                           ),
-                                        ] else
-                                          PopupMenuButton<String>(
-                                            enabled: !state.isSubmitting,
-                                            itemBuilder: (context) => const [
-                                              PopupMenuItem(
-                                                value: 'role',
-                                                child: Text('Đổi vai trò'),
-                                              ),
-                                              PopupMenuItem(
-                                                value: 'remove',
-                                                child: Text('Xóa khỏi workspace'),
-                                              ),
-                                            ],
-                                            onSelected: (value) {
-                                              if (value == 'role') {
-                                                _updateRole(member);
-                                                return;
-                                              }
+                                          if (member.isPendingOwnerApproval && isOwner) ...[
+                                            const SizedBox(height: 8),
+                                            FilledButton.tonal(
+                                              onPressed: state.isSubmitting
+                                                  ? null
+                                                  : () => _approveMemberInvitation(member),
+                                              child: const Text('Duyệt'),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            TextButton(
+                                              onPressed: state.isSubmitting
+                                                  ? null
+                                                  : () => _rejectMemberInvitation(member),
+                                              child: const Text('Từ chối'),
+                                            ),
+                                          ] else
+                                            PopupMenuButton<String>(
+                                              enabled: !state.isSubmitting,
+                                              itemBuilder: (context) => const [
+                                                PopupMenuItem(
+                                                  value: 'role',
+                                                  child: Text('Đổi vai trò'),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 'remove',
+                                                  child: Text('Xóa khỏi workspace'),
+                                                ),
+                                              ],
+                                              onSelected: (value) {
+                                                if (value == 'role') {
+                                                  _updateRole(member);
+                                                  return;
+                                                }
 
-                                              _removeMember(member);
-                                            },
-                                          ),
-                                      ],
-                                    ),
-                                  ],
+                                                _removeMember(member);
+                                              },
+                                            ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                       ],
                     ),

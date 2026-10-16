@@ -17,6 +17,9 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _obscureCurrentPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -57,9 +60,12 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
     return AuthScreenContainer(
       title: 'Đổi mật khẩu',
       subtitle: 'Bảo vệ tài khoản với mật khẩu mới an toàn hơn',
+      icon: Icons.lock_reset_rounded,
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Align(
               alignment: Alignment.centerLeft,
@@ -71,10 +77,23 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
             const SizedBox(height: 10),
             TextFormField(
               controller: _currentPasswordController,
-              obscureText: true,
+              obscureText: _obscureCurrentPassword,
               decoration: const InputDecoration(
                 labelText: 'Mật khẩu hiện tại',
                 prefixIcon: Icon(Icons.lock_clock_outlined),
+              ).copyWith(
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _obscureCurrentPassword = !_obscureCurrentPassword;
+                    });
+                  },
+                  icon: Icon(
+                    _obscureCurrentPassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
               ),
               validator: (value) {
                 if ((value ?? '').trim().isEmpty) {
@@ -86,10 +105,23 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _newPasswordController,
-              obscureText: true,
+              obscureText: _obscureNewPassword,
               decoration: const InputDecoration(
                 labelText: 'Mật khẩu mới',
                 prefixIcon: Icon(Icons.lock_outline_rounded),
+              ).copyWith(
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _obscureNewPassword = !_obscureNewPassword;
+                    });
+                  },
+                  icon: Icon(
+                    _obscureNewPassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
               ),
               validator: (value) {
                 final v = value?.trim() ?? '';
@@ -101,10 +133,23 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _confirmPasswordController,
-              obscureText: true,
+              obscureText: _obscureConfirmPassword,
               decoration: const InputDecoration(
                 labelText: 'Xác nhận mật khẩu mới',
                 prefixIcon: Icon(Icons.verified_user_outlined),
+              ).copyWith(
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                    });
+                  },
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
               ),
               validator: (value) {
                 final v = value?.trim() ?? '';
@@ -115,18 +160,65 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                 return null;
               },
             ),
+            const SizedBox(height: 8),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _newPasswordController,
+              builder: (context, value, _) {
+                final length = value.text.trim().length;
+                final strengthLabel = switch (length) {
+                  >= 10 => 'Mạnh',
+                  >= 8 => 'Khá',
+                  >= 6 => 'Trung bình',
+                  _ => 'Yếu',
+                };
+
+                final tone = switch (length) {
+                  >= 10 => Theme.of(context).colorScheme.tertiary,
+                  >= 8 => Theme.of(context).colorScheme.secondary,
+                  >= 6 => Theme.of(context).colorScheme.primary,
+                  _ => Theme.of(context).colorScheme.error,
+                };
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: tone.withValues(alpha: 0.10),
+                    border: Border.all(color: tone.withValues(alpha: 0.45)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.security_rounded, size: 16, color: tone),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Độ mạnh mật khẩu: $strengthLabel',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: FilledButton.icon(
                 onPressed: state.isLoading ? null : _submit,
-                child: state.isLoading
+                icon: state.isLoading
                     ? const SizedBox(
-                        width: 18,
-                        height: 18,
+                        width: 16,
+                        height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Xác nhận đổi mật khẩu'),
+                    : const Icon(Icons.verified_rounded),
+                label: Text(
+                  state.isLoading ? 'Đang cập nhật...' : 'Xác nhận đổi mật khẩu',
+                ),
               ),
             ),
           ],

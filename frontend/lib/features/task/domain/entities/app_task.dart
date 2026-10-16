@@ -10,6 +10,7 @@ class AppTask {
     this.statusId,
     this.description,
     this.deadline,
+    this.imageUrl,
     this.createdAt,
     this.assignees = const [],
     this.labels = const [],
@@ -22,6 +23,7 @@ class AppTask {
   final String? description;
   final String priority;
   final DateTime? deadline;
+  final String? imageUrl;
   final DateTime? createdAt;
   final List<TaskAssigneeDetail> assignees;
   final List<TaskLabelDetail> labels;
