@@ -1,3 +1,4 @@
+import 'package:prm_smart_task/features/task/presentation/widgets/task_activity_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -785,6 +786,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                                 ],
                               ),
                             ),
+                            TaskActivityPanel(key: ValueKey(task), taskId: widget.taskId),
                             const SizedBox(height: 12),
                             SizedBox(
                               width: double.infinity,

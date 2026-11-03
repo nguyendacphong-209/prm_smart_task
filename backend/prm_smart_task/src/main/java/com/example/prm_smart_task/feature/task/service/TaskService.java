@@ -45,6 +45,7 @@ public class TaskService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final AppUserRepository appUserRepository;
     private final NotificationService notificationService;
+    private final com.example.prm_smart_task.feature.activity.TaskActivityService activityService;
 
     public TaskService(
             TaskRepository taskRepository,
@@ -54,7 +55,7 @@ public class TaskService {
             LabelRepository labelRepository,
             WorkspaceMemberRepository workspaceMemberRepository,
             AppUserRepository appUserRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService, com.example.prm_smart_task.feature.activity.TaskActivityService activityService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.taskStatusRepository = taskStatusRepository;
@@ -63,6 +64,7 @@ public class TaskService {
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.appUserRepository = appUserRepository;
         this.notificationService = notificationService;
+        this.activityService = activityService;
     }
 
     @Transactional
@@ -108,6 +110,7 @@ public class TaskService {
         Task task = getTask(taskId);
         ensureWorkspaceMember(currentUser, task.getProject().getWorkspace().getId());
 
+        var activityBefore = activityService.snapshot(task);
         if (task.getStatus() == null && request.statusId() == null) {
             throw new BadRequestException("Task must have a status. Please provide statusId.");
         }
@@ -156,6 +159,7 @@ public class TaskService {
             applyAssignees(updatedTask, updatedTask.getProject().getWorkspace().getId(), request.assigneeIds(), currentUser);
         }
 
+        activityService.record(updatedTask, currentUser, activityBefore);
         return mapTask(updatedTask);
     }
 
