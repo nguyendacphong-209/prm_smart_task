@@ -14,6 +14,7 @@ import com.example.prm_smart_task.dto.auth.AuthTokenResponse;
 import com.example.prm_smart_task.dto.common.ApiMessageResponse;
 import com.example.prm_smart_task.dto.auth.ChangePasswordRequest;
 import com.example.prm_smart_task.dto.user.CurrentUserResponse;
+import com.example.prm_smart_task.dto.auth.GoogleLoginRequest;
 import com.example.prm_smart_task.dto.auth.LoginRequest;
 import com.example.prm_smart_task.dto.auth.LogoutRequest;
 import com.example.prm_smart_task.dto.auth.RefreshTokenRequest;
@@ -42,6 +43,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthTokenResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthTokenResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthTokenResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        AuthTokenResponse response = authService.loginWithGoogle(request);
         return ResponseEntity.ok(response);
     }
 

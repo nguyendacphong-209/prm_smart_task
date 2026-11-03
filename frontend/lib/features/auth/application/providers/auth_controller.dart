@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prm_smart_task/features/auth/application/states/auth_state.dart';
+import 'package:prm_smart_task/features/auth/domain/entities/auth_session.dart';
 import 'package:prm_smart_task/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthController extends StateNotifier<AuthState> {
@@ -17,7 +18,11 @@ class AuthController extends StateNotifier<AuthState> {
         return;
       }
 
-      state = state.copyWith(isLoading: true, clearError: true, clearInfo: true);
+      state = state.copyWith(
+        isLoading: true,
+        clearError: true,
+        clearInfo: true,
+      );
       final user = await _repository.getCurrentUser();
       state = state.copyWith(
         isLoading: false,
@@ -38,6 +43,40 @@ class AuthController extends StateNotifier<AuthState> {
 
     try {
       final session = await _repository.login(email: email, password: password);
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        user: session.user,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: false,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> loginWithGoogle() =>
+      _completeGoogleLogin(_repository.loginWithGoogle);
+
+  Future<bool> loginWithGoogleToken(String idToken) =>
+      _completeGoogleLogin(() => _repository.loginWithGoogleToken(idToken));
+
+  Future<bool> _completeGoogleLogin(
+    Future<AuthSession?> Function() signIn,
+  ) async {
+    state = state.copyWith(isLoading: true, clearError: true, clearInfo: true);
+
+    try {
+      final session = await signIn();
+      if (session == null) {
+        state = state.copyWith(isLoading: false);
+        return false;
+      }
+
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,

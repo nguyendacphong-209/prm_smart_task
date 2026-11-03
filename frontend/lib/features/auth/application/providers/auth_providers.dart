@@ -3,6 +3,7 @@ import 'package:prm_smart_task/core/network/dio_client.dart';
 import 'package:prm_smart_task/features/auth/application/providers/auth_controller.dart';
 import 'package:prm_smart_task/features/auth/application/states/auth_state.dart';
 import 'package:prm_smart_task/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:prm_smart_task/features/auth/data/datasources/google_auth_data_source.dart';
 import 'package:prm_smart_task/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:prm_smart_task/features/auth/domain/repositories/auth_repository.dart';
 
@@ -11,9 +12,14 @@ final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   return AuthRemoteDataSource(dio);
 });
 
+final googleAuthDataSourceProvider = Provider<GoogleAuthDataSource>((ref) {
+  return GoogleAuthDataSource();
+});
+
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final remote = ref.watch(authRemoteDataSourceProvider);
-  return AuthRepositoryImpl(remote);
+  final googleAuth = ref.watch(googleAuthDataSourceProvider);
+  return AuthRepositoryImpl(remote, googleAuth);
 });
 
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((

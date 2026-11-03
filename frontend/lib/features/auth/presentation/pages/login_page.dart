@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/features/auth/application/providers/auth_providers.dart';
+import 'package:prm_smart_task/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:prm_smart_task/features/auth/presentation/widgets/auth_screen_container.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -27,10 +28,42 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await ref.read(authControllerProvider.notifier).login(
+    final success = await ref
+        .read(authControllerProvider.notifier)
+        .login(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
+
+    if (!mounted) return;
+
+    final state = ref.read(authControllerProvider);
+    if (success) {
+      context.go('/home');
+      return;
+    }
+
+    if (state.errorMessage != null) {
+      showAppSnack(state.errorMessage!);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    await _completeGoogleSignIn(
+      ref.read(authControllerProvider.notifier).loginWithGoogle,
+    );
+  }
+
+  Future<void> _signInWithGoogleToken(String idToken) async {
+    await _completeGoogleSignIn(
+      () => ref
+          .read(authControllerProvider.notifier)
+          .loginWithGoogleToken(idToken),
+    );
+  }
+
+  Future<void> _completeGoogleSignIn(Future<bool> Function() signIn) async {
+    final success = await signIn();
 
     if (!mounted) return;
 
@@ -103,13 +136,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     : const Text('Đăng nhập'),
               ),
             ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'HOẶC',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+                const Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 16),
+            GoogleSignInButton(
+              isLoading: state.isLoading,
+              onPressed: _signInWithGoogle,
+              onIdToken: _signInWithGoogleToken,
+              onError: (error) => showAppSnack(
+                error.toString().replaceFirst('Exception: ', ''),
+              ),
+              dataSource: ref.watch(googleAuthDataSourceProvider),
+            ),
             if (state.errorMessage != null) ...[
               const SizedBox(height: 10),
               Text(
                 state.errorMessage!,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
             const SizedBox(height: 12),
