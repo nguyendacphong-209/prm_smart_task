@@ -39,6 +39,7 @@ public class KanbanService {
     private final TaskStatusRepository taskStatusRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final NotificationService notificationService;
+    private final com.example.prm_smart_task.feature.activity.TaskActivityService activityService;
 
     public KanbanService(
             AppUserRepository appUserRepository,
@@ -47,7 +48,7 @@ public class KanbanService {
             TaskAssignmentRepository taskAssignmentRepository,
             TaskStatusRepository taskStatusRepository,
             WorkspaceMemberRepository workspaceMemberRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService, com.example.prm_smart_task.feature.activity.TaskActivityService activityService) {
         this.appUserRepository = appUserRepository;
         this.projectRepository = projectRepository;
         this.taskRepository = taskRepository;
@@ -55,6 +56,7 @@ public class KanbanService {
         this.taskStatusRepository = taskStatusRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.notificationService = notificationService;
+        this.activityService = activityService;
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +126,7 @@ public class KanbanService {
         TaskStatus status = taskStatusRepository.findByIdAndProjectId(request.statusId(), projectId)
                 .orElseThrow(() -> new BadRequestException("Status not found in this project"));
 
+        var activityBefore = activityService.snapshot(task);
         String oldStatusName = task.getStatus() == null ? "No Status" : task.getStatus().getName();
         String newStatusName = status.getName();
         boolean statusChanged = task.getStatus() == null || !task.getStatus().getId().equals(status.getId());
@@ -135,6 +138,7 @@ public class KanbanService {
             notifyTaskStatusChanged(updatedTask, oldStatusName, newStatusName, currentUser);
         }
 
+        activityService.record(updatedTask, currentUser, activityBefore);
         return mapTaskCard(updatedTask);
     }
 
