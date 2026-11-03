@@ -39,12 +39,21 @@ public class PaymentController {
     }
 
     @PostMapping("/payos/webhook")
-    public ResponseEntity<Map<String, Object>> webhook(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Map<String, Object>> webhook(
+            @RequestBody(required = false) Map<String, Object> payload) {
+        if (payload == null || payload.isEmpty()) {
+            return ResponseEntity.ok(Map.of("success", true, "message", "Webhook endpoint is reachable"));
+        }
         Object signature = payload.get("signature");
         if (signature == null || signature.toString().isBlank()) {
             return ResponseEntity.ok(Map.of("success", true, "message", "Webhook endpoint is reachable"));
         }
         paymentService.handleWebhook(payload);
         return ResponseEntity.ok(Map.of("success", true, "message", "Webhook processed"));
+    }
+
+    @GetMapping("/payos/webhook")
+    public ResponseEntity<Map<String, Object>> webhookHealthCheck() {
+        return ResponseEntity.ok(Map.of("success", true, "message", "Webhook endpoint is reachable"));
     }
 }
