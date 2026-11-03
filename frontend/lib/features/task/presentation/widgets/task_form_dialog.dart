@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:prm_smart_task/core/theme/app_messenger.dart';
 import 'package:prm_smart_task/features/task/domain/entities/task_label_option.dart';
 import 'package:prm_smart_task/features/task/domain/entities/task_status_option.dart';
+import 'package:prm_smart_task/features/task/presentation/widgets/ai_assistant_dialog.dart';
 import 'package:prm_smart_task/features/task/presentation/widgets/assignee_selector.dart';
 import 'package:prm_smart_task/features/workspace/domain/entities/workspace_member.dart';
 
@@ -166,10 +167,48 @@ class _TaskFormDialogState extends State<TaskFormDialog> {
     );
   }
 
+  Future<void> _openAiAssistant() async {
+    final result = await showDialog<AiFormApplicationResult>(
+      context: context,
+      builder: (context) => AiAssistantDialog(
+        initialTitle: _titleController.text,
+        initialDescription: _descriptionController.text,
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      _priority = result.priority.toLowerCase();
+
+      final existingDesc = _descriptionController.text.trim();
+      final subtasksText = result.selectedSubtasks.map((s) => '- [ ] $s').join('\n');
+
+      if (subtasksText.isNotEmpty) {
+        if (existingDesc.isEmpty) {
+          _descriptionController.text = '### Sub-tasks gợi ý bởi AI:\n$subtasksText';
+        } else {
+          _descriptionController.text = '$existingDesc\n\n### Sub-tasks gợi ý bởi AI:\n$subtasksText';
+        }
+      }
+    });
+
+    showAppSnack('Đã áp dụng gợi ý AI vào Task!');
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.dialogTitle),
+      title: Row(
+        children: [
+          Expanded(child: Text(widget.dialogTitle)),
+          IconButton.filledTonal(
+            tooltip: 'Trợ lý AI phân tích Task',
+            icon: const Icon(Icons.auto_awesome, color: Colors.amber),
+            onPressed: _openAiAssistant,
+          ),
+        ],
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

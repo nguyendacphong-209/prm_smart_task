@@ -14,6 +14,7 @@ import 'package:prm_smart_task/features/task/domain/entities/app_task.dart';
 import 'package:prm_smart_task/features/task/domain/entities/task_label_option.dart';
 import 'package:prm_smart_task/features/task/domain/entities/task_status_option.dart';
 import 'package:prm_smart_task/features/task/presentation/widgets/task_form_dialog.dart';
+import 'package:prm_smart_task/features/task/presentation/widgets/task_time_tracker_widget.dart';
 import 'package:prm_smart_task/features/workspace/application/providers/workspace_providers.dart';
 import 'package:prm_smart_task/features/workspace/domain/entities/workspace_member.dart';
 import 'package:prm_smart_task/shared/application/controllers/image_upload_controller.dart';
@@ -578,6 +579,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                                   ),
                                 ],
                               ),
+                            ),
+                            const SizedBox(height: 12),
+                            TaskTimeTrackerWidget(
+                              taskId: task.id,
+                              initialEstimatedHours: 4.0,
                             ),
                             const SizedBox(height: 12),
                             GlassCard(

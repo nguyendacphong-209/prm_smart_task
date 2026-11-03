@@ -87,4 +87,7 @@ class ApiConstants {
         '/api/images/task/$taskId/upload';
     
     static const String imageDelete = '/api/images/delete';
+
+    // AI Assistant
+    static const String aiAnalyzeTask = '/api/ai/analyze-task';
 }
