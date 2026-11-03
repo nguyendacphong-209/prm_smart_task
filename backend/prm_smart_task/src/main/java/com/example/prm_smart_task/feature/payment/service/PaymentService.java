@@ -12,6 +12,8 @@ import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class PaymentService {
+    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
+
     private final PaymentOrderRepository orderRepository;
     private final AppUserRepository userRepository;
     private final JsonMapper jsonMapper;
@@ -85,7 +89,11 @@ public class PaymentService {
             HttpResponse<String> response = HttpClient.newHttpClient().send(httpRequest, HttpResponse.BodyHandlers.ofString());
             JsonNode root = jsonMapper.readTree(response.body());
             if (response.statusCode() < 200 || response.statusCode() >= 300 || !"00".equals(root.path("code").asText())) {
-                throw new BadRequestException("Không thể tạo thanh toán PayOS: " + root.path("desc").asText("Lỗi không xác định"));
+                String payOsCode = root.path("code").asText("unknown");
+                String payOsDescription = root.path("desc").asText("Lỗi không xác định");
+                logger.warn("PayOS payment creation rejected: httpStatus={}, payOsCode={}, description={}",
+                        response.statusCode(), payOsCode, payOsDescription);
+                throw new BadRequestException("Không thể tạo thanh toán PayOS: " + payOsDescription);
             }
             JsonNode data = root.path("data");
             PaymentOrder order = new PaymentOrder();
@@ -119,13 +127,19 @@ public class PaymentService {
             long orderCode = data.path("orderCode").asLong();
             String signature = root.path("signature").asText();
             if (signature.isBlank()) {
+                logger.info("PayOS webhook probe received without a signature");
                 return;
             }
             String computed = hmacSha256(canonicalData(data), checksumKey);
-            if (!signature.equals(computed)) throw new BadRequestException("Chữ ký webhook PayOS không hợp lệ");
+            if (!signature.equals(computed)) {
+                logger.warn("PayOS webhook rejected: signature validation failed");
+                throw new BadRequestException("Chữ ký webhook PayOS không hợp lệ");
+            }
+            logger.info("PayOS webhook signature validated");
             PaymentOrder order = orderRepository.findByOrderCode(orderCode)
                     .orElse(null);
             if (order == null) {
+                logger.info("PayOS webhook validated but did not match a local payment order");
                 return;
             }
             if ("00".equals(root.path("code").asText()) && data.path("code").asText().equals("00") && !"PAID".equals(order.getStatus())) {
