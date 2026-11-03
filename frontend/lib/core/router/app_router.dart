@@ -6,6 +6,7 @@ import 'package:prm_smart_task/features/auth/presentation/pages/edit_profile_pag
 import 'package:prm_smart_task/features/auth/presentation/pages/login_page.dart';
 import 'package:prm_smart_task/features/auth/presentation/pages/register_page.dart';
 import 'package:prm_smart_task/features/home/presentation/pages/home_shell.dart';
+import 'package:prm_smart_task/features/payment/presentation/pages/payment_page.dart';
 import 'package:prm_smart_task/features/kanban/presentation/pages/kanban_board_page.dart';
 import 'package:prm_smart_task/features/project/presentation/pages/project_list_page.dart';
 import 'package:prm_smart_task/features/task/presentation/pages/task_detail_page.dart';
@@ -44,6 +45,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile/change-password',
         builder: (context, state) => const ChangePasswordPage(),
+      ),
+      GoRoute(
+        path: '/profile/vip',
+        builder: (context, state) => const PaymentPage(),
       ),
 
       GoRoute(
