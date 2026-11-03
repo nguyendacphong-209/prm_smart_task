@@ -177,8 +177,9 @@ public class PaymentService {
         try {
             java.util.TreeMap<String, String> sorted = new java.util.TreeMap<>();
             for (var entry : data.properties()) {
-                sorted.put(entry.getKey(), entry.getValue().isValueNode()
-                        ? entry.getValue().asText() : entry.getValue().toString());
+                JsonNode value = entry.getValue();
+                sorted.put(entry.getKey(), value.isNull() ? ""
+                        : value.isValueNode() ? value.asText() : value.toString());
             }
             StringBuilder result = new StringBuilder(); sorted.forEach((key, value) -> result.append(result.isEmpty() ? "" : "&").append(key).append('=').append(value));
             return result.toString();
