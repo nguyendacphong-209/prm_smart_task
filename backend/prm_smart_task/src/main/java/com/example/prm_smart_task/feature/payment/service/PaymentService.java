@@ -118,10 +118,16 @@ public class PaymentService {
             JsonNode data = root.path("data");
             long orderCode = data.path("orderCode").asLong();
             String signature = root.path("signature").asText();
+            if (signature.isBlank()) {
+                return;
+            }
             String computed = hmacSha256(canonicalData(data), checksumKey);
             if (!signature.equals(computed)) throw new BadRequestException("Chữ ký webhook PayOS không hợp lệ");
             PaymentOrder order = orderRepository.findByOrderCode(orderCode)
-                    .orElseThrow(() -> new BadRequestException("Không tìm thấy đơn thanh toán"));
+                    .orElse(null);
+            if (order == null) {
+                return;
+            }
             if ("00".equals(root.path("code").asText()) && data.path("code").asText().equals("00") && !"PAID".equals(order.getStatus())) {
                 markPaid(order);
             }

@@ -40,6 +40,10 @@ public class PaymentController {
 
     @PostMapping("/payos/webhook")
     public ResponseEntity<Map<String, Object>> webhook(@RequestBody Map<String, Object> payload) {
+        Object signature = payload.get("signature");
+        if (signature == null || signature.toString().isBlank()) {
+            return ResponseEntity.ok(Map.of("success", true, "message", "Webhook endpoint is reachable"));
+        }
         paymentService.handleWebhook(payload);
         return ResponseEntity.ok(Map.of("success", true, "message", "Webhook processed"));
     }
