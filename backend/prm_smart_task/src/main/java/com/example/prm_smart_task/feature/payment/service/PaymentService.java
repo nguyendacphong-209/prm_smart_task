@@ -6,9 +6,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -32,6 +32,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class PaymentService {
     private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
+    private static final long MAX_SAFE_INTEGER = 9_007_199_254_740_991L;
 
     private final PaymentOrderRepository orderRepository;
     private final AppUserRepository userRepository;
@@ -76,9 +77,8 @@ public class PaymentService {
             throw new BadRequestException("PayOS chưa được cấu hình. Thiếu PAYOS_CLIENT_ID, PAYOS_API_KEY hoặc PAYOS_CHECKSUM_KEY.");
         }
 
-        long orderCode = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-        if (orderCode == 0) orderCode = Instant.now().toEpochMilli();
-        String description = ("VIP " + request.planCode()).replace('_', ' ').substring(0, Math.min(25, ("VIP " + request.planCode()).replace('_', ' ').length()));
+        long orderCode = newOrderCode();
+        String description = paymentDescription(plan.code());
         String signature = hmacSha256("amount=" + plan.amount() + "&cancelUrl=" + cancelUrl + "&description=" + description + "&orderCode=" + orderCode + "&returnUrl=" + returnUrl, checksumKey);
         try {
             Map<String, Object> body = Map.of("orderCode", orderCode, "amount", plan.amount(), "description", description,
@@ -206,6 +206,19 @@ public class PaymentService {
             byte[] bytes = mac.doFinal(data.getBytes(StandardCharsets.UTF_8)); StringBuilder hex = new StringBuilder();
             for (byte value : bytes) hex.append(String.format("%02x", value)); return hex.toString();
         } catch (Exception exception) { throw new IllegalStateException("Không thể ký dữ liệu PayOS", exception); }
+    }
+
+    static long newOrderCode() {
+        return ThreadLocalRandom.current().nextLong(1, MAX_SAFE_INTEGER + 1);
+    }
+
+    static String paymentDescription(String planCode) {
+        return switch (planCode) {
+            case "VIP_1_MONTH" -> "VIP1M";
+            case "VIP_3_MONTH" -> "VIP3M";
+            case "VIP_1_YEAR" -> "VIP1Y";
+            default -> throw new IllegalArgumentException("Unknown PayOS plan code");
+        };
     }
 
     private record Plan(String code, long amount, int months) {}

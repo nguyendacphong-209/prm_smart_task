@@ -1,6 +1,7 @@
 package com.example.prm_smart_task.feature.payment.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -55,6 +56,22 @@ class PaymentServiceWebhookTest {
         Map<String, Object> payload = webhookPayload("invalid-signature");
 
         assertThrows(BadRequestException.class, () -> paymentService.handleWebhook(payload));
+    }
+
+    @Test
+    void generatedOrderCodesStayWithinJavaScriptSafeIntegerRange() {
+        for (int i = 0; i < 1_000; i++) {
+            long orderCode = PaymentService.newOrderCode();
+            assertTrue(orderCode > 0);
+            assertTrue(orderCode <= 9_007_199_254_740_991L);
+        }
+    }
+
+    @Test
+    void paymentDescriptionsStayWithinPayOsBankDescriptionLimit() {
+        assertTrue(PaymentService.paymentDescription("VIP_1_MONTH").length() <= 9);
+        assertTrue(PaymentService.paymentDescription("VIP_3_MONTH").length() <= 9);
+        assertTrue(PaymentService.paymentDescription("VIP_1_YEAR").length() <= 9);
     }
 
     private static Map<String, Object> webhookPayload(String signature) {
