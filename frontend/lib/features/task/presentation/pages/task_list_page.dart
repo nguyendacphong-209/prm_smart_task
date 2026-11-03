@@ -1,3 +1,4 @@
+import 'package:prm_smart_task/features/task/presentation/pages/label_management_page.dart';
 import 'package:prm_smart_task/features/task/domain/entities/task_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -54,8 +55,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
           .getStatusOptions(projectId: widget.projectId);
       if (mounted) setState(() => _filterStatuses = statuses);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         _showSnack('Không tải được tên trạng thái. Bấm làm mới để thử lại.');
+      }
     }
   }
 
@@ -75,8 +77,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     ValueChanged<String?> changed,
   ) {
     final entries = {...options};
-    if (selected != null && !entries.containsKey(selected))
+    if (selected != null && !entries.containsKey(selected)) {
       entries[selected] = 'Giá trị đã chọn (không còn trong danh sách)';
+    }
     return SizedBox(
       width: 210,
       child: DropdownButtonFormField<String>(
@@ -101,11 +104,12 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   Widget _filters(List<AppTask> tasks, int count) {
     final statuses = {for (final s in _filterStatuses) s.id: s.name};
     for (final task in tasks) {
-      if (task.statusId != null)
+      if (task.statusId != null) {
         statuses.putIfAbsent(
           task.statusId!,
           () => 'Trạng thái ${task.statusId}',
         );
+      }
     }
     return GlassCard(
       style: GlassCardStyle.liquid,
@@ -464,6 +468,23 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
               : 'Tasks',
         ),
         actions: [
+          IconButton(
+            tooltip: 'Quản lý nhãn',
+            icon: const Icon(Icons.label_outline),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      LabelManagementPage(projectId: widget.projectId),
+                ),
+              );
+              if (!mounted) {
+                return;
+              }
+              setState(() => _filterLabel = null);
+              await _reload();
+            },
+          ),
           IconButton(
             onPressed: state.isSubmitting ? null : () => _showTaskDialog(),
             icon: const Icon(Icons.add_task_rounded),
