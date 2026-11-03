@@ -149,6 +149,15 @@ class ProfilePage extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.tonalIcon(
+                    onPressed: () => context.push('/profile/vip'),
+                    icon: const Icon(Icons.workspace_premium_rounded),
+                    label: const Text('Nạp VIP bằng mã QR PayOS'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.tonalIcon(
                     onPressed: () => context.push('/profile/change-password'),
                     icon: const Icon(Icons.lock_reset_rounded),
                     label: const Text('Đổi mật khẩu'),

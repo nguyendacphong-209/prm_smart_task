@@ -63,7 +63,7 @@ final dioProvider = Provider<Dio>((ref) {
       );
       if (currentRefreshToken == null || currentRefreshToken.isEmpty) {
         refreshCompleter!.complete(null);
-        return refreshCompleter!.future;
+        return await refreshCompleter!.future;
       }
 
       final refreshDio = Dio(
@@ -91,7 +91,7 @@ final dioProvider = Provider<Dio>((ref) {
       if (data is! Map<String, dynamic>) {
         logDebug('Refresh response body is not JSON object');
         refreshCompleter!.complete(null);
-        return refreshCompleter!.future;
+        return await refreshCompleter!.future;
       }
 
       final newAccessToken = data['accessToken']?.toString() ?? '';
@@ -100,7 +100,7 @@ final dioProvider = Provider<Dio>((ref) {
       if (newAccessToken.isEmpty) {
         logDebug('Refresh succeeded but accessToken is empty');
         refreshCompleter!.complete(null);
-        return refreshCompleter!.future;
+        return await refreshCompleter!.future;
       }
 
       await AuthStorage.saveTokens(
@@ -112,7 +112,7 @@ final dioProvider = Provider<Dio>((ref) {
       );
 
       refreshCompleter!.complete(newAccessToken);
-      return refreshCompleter!.future;
+      return await refreshCompleter!.future;
     } on DioException catch (e) {
       logDebug(
         'Refresh failed. status=${e.response?.statusCode} message=${e.response?.data ?? e.message}',
@@ -123,11 +123,11 @@ final dioProvider = Provider<Dio>((ref) {
       }
 
       refreshCompleter!.complete(null);
-      return refreshCompleter!.future;
+      return await refreshCompleter!.future;
     } catch (_) {
       logDebug('Refresh failed with unknown error');
       refreshCompleter!.complete(null);
-      return refreshCompleter!.future;
+      return await refreshCompleter!.future;
     } finally {
       refreshCompleter = null;
     }

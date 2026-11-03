@@ -5,6 +5,8 @@ CREATE TABLE users (
     password TEXT NOT NULL,
     full_name VARCHAR(255),
     avatar_url TEXT,
+    is_vip BOOLEAN NOT NULL DEFAULT FALSE,
+    vip_expires_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

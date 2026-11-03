@@ -37,6 +37,12 @@ public class AppUser {
     @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
+    @Column(name = "is_vip", nullable = false)
+    private boolean vip;
+
+    @Column(name = "vip_expires_at")
+    private LocalDateTime vipExpiresAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

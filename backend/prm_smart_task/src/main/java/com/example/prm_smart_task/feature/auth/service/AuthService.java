@@ -196,6 +196,8 @@ public class AuthService {
                 user.getEmail(),
                 user.getFullName(),
                 user.getAvatarUrl(),
-                user.getCreatedAt());
+                user.getCreatedAt(),
+                user.isVip(),
+                user.getVipExpiresAt());
     }
 }

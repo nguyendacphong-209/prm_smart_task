@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:prm_smart_task/core/constants/api_constants.dart';
 import 'package:prm_smart_task/core/storage/auth_storage.dart';
+import 'package:prm_smart_task/features/task/data/models/ai_task_analyze_model.dart';
 import 'package:prm_smart_task/features/task/data/models/task_label_option_model.dart';
 import 'package:prm_smart_task/features/task/data/models/task_model.dart';
 import 'package:prm_smart_task/features/task/data/models/task_status_option_model.dart';
@@ -197,6 +198,27 @@ class TaskRemoteDataSource {
       await _dio.delete(
         ApiConstants.taskDetail(taskId),
         options: await _authOptions(),
+      );
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e));
+    }
+  }
+
+  Future<AiTaskAnalyzeModel> analyzeTaskWithAi({
+    required String taskTitle,
+    String? taskDescription,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.aiAnalyzeTask,
+        data: {
+          'taskTitle': taskTitle,
+          'taskDescription': taskDescription ?? '',
+        },
+      );
+
+      return AiTaskAnalyzeModel.fromJson(
+        response.data as Map<String, dynamic>,
       );
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(e));

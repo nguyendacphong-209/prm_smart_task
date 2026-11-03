@@ -7,12 +7,16 @@ class AuthUserModel {
     required this.email,
     required this.fullName,
     this.avatarUrl,
+    this.vip = false,
+    this.vipExpiresAt,
   });
 
   final String id;
   final String email;
   final String fullName;
   final String? avatarUrl;
+  final bool vip;
+  final DateTime? vipExpiresAt;
 
   factory AuthUserModel.fromJson(Map<String, dynamic> json) {
     return AuthUserModel(
@@ -20,6 +24,10 @@ class AuthUserModel {
       email: json['email']?.toString() ?? '',
       fullName: json['fullName']?.toString() ?? '',
       avatarUrl: json['avatarUrl']?.toString(),
+      vip: json['vip'] == true,
+      vipExpiresAt: json['vipExpiresAt'] == null
+          ? null
+          : DateTime.tryParse(json['vipExpiresAt'].toString()),
     );
   }
 
@@ -29,6 +37,8 @@ class AuthUserModel {
       email: email,
       fullName: fullName,
       avatarUrl: avatarUrl,
+      vip: vip,
+      vipExpiresAt: vipExpiresAt,
     );
   }
 }
@@ -50,6 +60,10 @@ class AuthSessionModel {
       email: json['email']?.toString() ?? '',
       fullName: json['fullName']?.toString() ?? '',
       avatarUrl: json['avatarUrl']?.toString(),
+      vip: json['vip'] == true,
+      vipExpiresAt: json['vipExpiresAt'] == null
+          ? null
+          : DateTime.tryParse(json['vipExpiresAt'].toString()),
     );
 
     return AuthSessionModel(

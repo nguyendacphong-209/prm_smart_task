@@ -8,6 +8,8 @@ public record CurrentUserResponse(
         String email,
         String fullName,
         String avatarUrl,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        boolean vip,
+        LocalDateTime vipExpiresAt
 ) {
 }

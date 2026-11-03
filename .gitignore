@@ -47,3 +47,14 @@ frontend/build/
 frontend/coverage/
 frontend/.idea/
 frontend/*.iml
+
+### Flutter iOS generated files ###
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/Flutter.podspec
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/flutter_export_environment.sh
+frontend/ios/Flutter/ephemeral/
+frontend/ios/Runner/GeneratedPluginRegistrant.h
+frontend/ios/Runner/GeneratedPluginRegistrant.m
+frontend/ios/Runner.xcworkspace/xcuserdata/
