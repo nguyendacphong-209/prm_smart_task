@@ -165,6 +165,7 @@ final dioProvider = Provider<Dio>((ref) {
         final requestPath = error.requestOptions.path;
         final isAuthEndpoint =
             requestPath.contains(ApiConstants.login) ||
+            requestPath.contains(ApiConstants.googleLogin) ||
             requestPath.contains(ApiConstants.register) ||
             requestPath.contains(ApiConstants.refresh) ||
             requestPath.contains(ApiConstants.logout);

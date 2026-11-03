@@ -1,6 +1,7 @@
 package com.example.prm_smart_task.feature.auth.service;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +13,7 @@ import com.example.prm_smart_task.dto.auth.AuthTokenResponse;
 import com.example.prm_smart_task.dto.common.ApiMessageResponse;
 import com.example.prm_smart_task.dto.auth.ChangePasswordRequest;
 import com.example.prm_smart_task.dto.user.CurrentUserResponse;
+import com.example.prm_smart_task.dto.auth.GoogleLoginRequest;
 import com.example.prm_smart_task.dto.auth.LoginRequest;
 import com.example.prm_smart_task.dto.auth.LogoutRequest;
 import com.example.prm_smart_task.dto.auth.RefreshTokenRequest;
@@ -32,6 +34,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final GoogleIdTokenVerifierService googleIdTokenVerifier;
     private final long refreshTokenExpirationMs;
 
     public AuthService(
@@ -39,11 +42,13 @@ public class AuthService {
             RefreshTokenRepository refreshTokenRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
+            GoogleIdTokenVerifierService googleIdTokenVerifier,
             @Value("${security.jwt.refresh-expiration-ms:604800000}") long refreshTokenExpirationMs) {
         this.appUserRepository = appUserRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.googleIdTokenVerifier = googleIdTokenVerifier;
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;
     }
 
@@ -74,6 +79,26 @@ public class AuthService {
         if (!passwordMatches) {
             throw new UnauthorizedException("Invalid email or password");
         }
+
+        return issueTokens(user);
+    }
+
+    @Transactional
+    public AuthTokenResponse loginWithGoogle(GoogleLoginRequest request) {
+        GoogleUserInfo googleUser = googleIdTokenVerifier.verify(request.idToken());
+        String normalizedEmail = googleUser.email().trim().toLowerCase(Locale.ROOT);
+
+        AppUser user = appUserRepository.findByEmail(normalizedEmail).orElseGet(() -> {
+            AppUser newUser = new AppUser();
+            newUser.setEmail(normalizedEmail);
+            newUser.setFullName(
+                    googleUser.name() == null || googleUser.name().isBlank()
+                            ? "Google User"
+                            : googleUser.name());
+            newUser.setAvatarUrl(googleUser.pictureUrl());
+            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            return appUserRepository.save(newUser);
+        });
 
         return issueTokens(user);
     }
