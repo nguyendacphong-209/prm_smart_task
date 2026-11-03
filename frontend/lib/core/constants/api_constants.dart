@@ -1,7 +1,10 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'https://prm-smart-task-api.onrender.com';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://prm-smart-task-api.onrender.com',
+  );
 
   static const String register = '/api/auth/register';
   static const String login = '/api/auth/login';

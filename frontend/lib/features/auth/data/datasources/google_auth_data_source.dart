@@ -2,26 +2,19 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleAuthDataSource {
-  GoogleAuthDataSource({String? serverClientId})
-    : _serverClientId =
-          serverClientId ??
-          const String.fromEnvironment(
-            'GOOGLE_SERVER_CLIENT_ID',
-            defaultValue:
-                '958068311216-d4bc2l0s6bg8havpomk5jvemjss4oe4f.apps.googleusercontent.com',
-          );
+  GoogleAuthDataSource({String? webClientId})
+    : _webClientId =
+          webClientId ?? const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
 
-  final String _serverClientId;
+  final String _webClientId;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   Future<void>? _initialization;
 
   Future<void> initialize() => _ensureInitialized();
 
   Future<String?> signInAndGetIdToken() async {
-    if (!kIsWeb && _serverClientId.isEmpty) {
-      throw StateError(
-        'Chưa cấu hình GOOGLE_SERVER_CLIENT_ID cho Google Sign-In.',
-      );
+    if (_webClientId.isEmpty) {
+      throw StateError('Chưa cấu hình GOOGLE_WEB_CLIENT_ID khi chạy Flutter.');
     }
 
     await _ensureInitialized();
@@ -57,7 +50,8 @@ class GoogleAuthDataSource {
 
   Future<void> _ensureInitialized() async {
     _initialization ??= _googleSignIn.initialize(
-      serverClientId: kIsWeb ? null : _serverClientId,
+      clientId: kIsWeb ? _webClientId : null,
+      serverClientId: kIsWeb ? null : _webClientId,
     );
 
     try {

@@ -45,16 +45,33 @@ class AuthSessionModel {
   final AuthUserModel user;
 
   factory AuthSessionModel.fromJson(Map<String, dynamic> json) {
+    final accessToken = json['accessToken'];
+    final refreshToken = json['refreshToken'];
+    final userId = json['userId'];
+    final email = json['email'];
+    if (accessToken is! String ||
+        accessToken.isEmpty ||
+        refreshToken is! String ||
+        refreshToken.isEmpty ||
+        userId == null ||
+        userId.toString().isEmpty ||
+        email is! String ||
+        email.isEmpty) {
+      throw const FormatException(
+        'Server trả về phiên đăng nhập không hợp lệ.',
+      );
+    }
+
     final user = AuthUserModel(
-      id: json['userId']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
+      id: userId.toString(),
+      email: email,
       fullName: json['fullName']?.toString() ?? '',
       avatarUrl: json['avatarUrl']?.toString(),
     );
 
     return AuthSessionModel(
-      accessToken: json['accessToken']?.toString() ?? '',
-      refreshToken: json['refreshToken']?.toString() ?? '',
+      accessToken: accessToken,
+      refreshToken: refreshToken,
       user: user,
     );
   }
