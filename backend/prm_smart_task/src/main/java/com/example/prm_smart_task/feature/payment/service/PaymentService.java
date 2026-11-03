@@ -24,14 +24,14 @@ import com.example.prm_smart_task.feature.shared.exception.BadRequestException;
 import com.example.prm_smart_task.feature.shared.exception.UnauthorizedException;
 import com.example.prm_smart_task.feature.user.entity.AppUser;
 import com.example.prm_smart_task.feature.user.repository.AppUserRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class PaymentService {
     private final PaymentOrderRepository orderRepository;
     private final AppUserRepository userRepository;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper jsonMapper;
     private final String clientId;
     private final String apiKey;
     private final String checksumKey;
@@ -40,7 +40,7 @@ public class PaymentService {
     private final String cancelUrl;
 
     public PaymentService(PaymentOrderRepository orderRepository, AppUserRepository userRepository,
-            ObjectMapper objectMapper,
+            JsonMapper jsonMapper,
             @Value("${payos.client-id:}") String clientId,
             @Value("${payos.api-key:}") String apiKey,
             @Value("${payos.checksum-key:}") String checksumKey,
@@ -49,7 +49,7 @@ public class PaymentService {
             @Value("${payos.cancel-url:http://localhost:8080/payment/cancel}") String cancelUrl) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
-        this.objectMapper = objectMapper;
+        this.jsonMapper = jsonMapper;
         this.clientId = clientId;
         this.apiKey = apiKey;
         this.checksumKey = checksumKey;
@@ -81,9 +81,9 @@ public class PaymentService {
                     "cancelUrl", cancelUrl, "returnUrl", returnUrl, "signature", signature);
             HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(apiBaseUrl + "/v2/payment-requests"))
                     .header("Content-Type", "application/json").header("x-client-id", clientId).header("x-api-key", apiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body))).build();
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonMapper.writeValueAsString(body))).build();
             HttpResponse<String> response = HttpClient.newHttpClient().send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            JsonNode root = objectMapper.readTree(response.body());
+            JsonNode root = jsonMapper.readTree(response.body());
             if (response.statusCode() < 200 || response.statusCode() >= 300 || !"00".equals(root.path("code").asText())) {
                 throw new BadRequestException("Không thể tạo thanh toán PayOS: " + root.path("desc").asText("Lỗi không xác định"));
             }
@@ -114,7 +114,7 @@ public class PaymentService {
     @Transactional
     public void handleWebhook(Map<String, Object> payload) {
         try {
-            JsonNode root = objectMapper.valueToTree(payload);
+            JsonNode root = jsonMapper.valueToTree(payload);
             JsonNode data = root.path("data");
             long orderCode = data.path("orderCode").asLong();
             String signature = root.path("signature").asText();
@@ -139,7 +139,7 @@ public class PaymentService {
                     .GET().build();
             HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                JsonNode root = objectMapper.readTree(response.body());
+                JsonNode root = jsonMapper.readTree(response.body());
                 String status = root.path("data").path("status").asText("");
                 if ("PAID".equalsIgnoreCase(status)) markPaid(order);
             }
@@ -170,8 +170,10 @@ public class PaymentService {
     private String canonicalData(JsonNode data) {
         try {
             java.util.TreeMap<String, String> sorted = new java.util.TreeMap<>();
-            java.util.Iterator<java.util.Map.Entry<String, JsonNode>> fields = data.fields();
-            while (fields.hasNext()) { var entry = fields.next(); sorted.put(entry.getKey(), entry.getValue().isValueNode() ? entry.getValue().asText() : entry.getValue().toString()); }
+            for (var entry : data.properties()) {
+                sorted.put(entry.getKey(), entry.getValue().isValueNode()
+                        ? entry.getValue().asText() : entry.getValue().toString());
+            }
             StringBuilder result = new StringBuilder(); sorted.forEach((key, value) -> result.append(result.isEmpty() ? "" : "&").append(key).append('=').append(value));
             return result.toString();
         } catch (Exception exception) { return ""; }
