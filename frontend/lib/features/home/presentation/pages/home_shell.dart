@@ -1,3 +1,4 @@
+import 'package:prm_smart_task/features/task/presentation/pages/pinned_tasks_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prm_smart_task/features/auth/presentation/pages/profile_page.dart';
@@ -37,6 +38,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       icon: Icons.notifications_outlined,
       selectedIcon: Icons.notifications,
       page: const NotificationPage(),
+    ),
+    (
+      label: 'Đã ghim',
+      icon: Icons.bookmark_border,
+      selectedIcon: Icons.bookmark,
+      page: const PinnedTasksPage(),
     ),
     (
       label: 'Profile',

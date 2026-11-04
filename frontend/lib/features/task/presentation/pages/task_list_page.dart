@@ -1,3 +1,6 @@
+import 'package:prm_smart_task/features/task/application/providers/task_pin_provider.dart';
+import 'package:prm_smart_task/features/task/presentation/widgets/task_pin_button.dart';
+import 'package:prm_smart_task/features/task/presentation/pages/pinned_tasks_page.dart';
 import 'package:prm_smart_task/features/task/presentation/pages/label_management_page.dart';
 import 'package:prm_smart_task/features/task/domain/entities/task_filter.dart';
 import 'package:flutter/material.dart';
@@ -225,6 +228,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   }
 
   Future<void> _reload() async {
+    ref.invalidate(taskPinsProvider);
     _loadFilterStatuses();
     await ref
         .read(taskControllerProvider.notifier)
@@ -426,6 +430,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         .deleteTask(taskId: task.id);
 
     if (!mounted) return;
+    if (success) {
+      ref.invalidate(taskPinsProvider);
+    }
     final state = ref.read(taskControllerProvider);
     _showSnack(
       success ? 'Đã xóa task' : (state.errorMessage ?? 'Không thể xóa task'),
@@ -468,6 +475,13 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
               : 'Tasks',
         ),
         actions: [
+          IconButton(
+            tooltip: 'Task đã ghim',
+            icon: const Icon(Icons.bookmarks_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const PinnedTasksPage()),
+            ),
+          ),
           IconButton(
             tooltip: 'Quản lý nhãn',
             icon: const Icon(Icons.label_outline),
@@ -608,6 +622,10 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                                             context,
                                           ).textTheme.titleMedium,
                                         ),
+                                      ),
+                                      TaskPinButton(
+                                        key: ValueKey('pin-${task.id}'),
+                                        taskId: task.id,
                                       ),
                                       PopupMenuButton<String>(
                                         enabled: !state.isSubmitting,
