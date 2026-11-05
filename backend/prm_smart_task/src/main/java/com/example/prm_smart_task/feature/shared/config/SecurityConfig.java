@@ -2,14 +2,19 @@ package com.example.prm_smart_task.feature.shared.config;
 
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -23,6 +28,8 @@ import com.example.prm_smart_task.feature.shared.security.JwtAuthenticationFilte
 
 @Configuration
 public class SecurityConfig {
+
+    private static final Logger securityLogger = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final String allowedOriginPatterns;
@@ -85,6 +92,15 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint unauthorizedEntryPoint() {
         return (request, response, authException) -> {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            securityLogger.warn(
+                    "Unauthorized request. method={} path={} authorizationHeaderPresent={} securityContextAuthenticated={} exception={}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    request.getHeader("Authorization") != null,
+                    authentication != null && authentication.isAuthenticated()
+                            && !(authentication instanceof AnonymousAuthenticationToken),
+                    authException.getClass().getSimpleName());
             response.setStatus(401);
             response.setContentType("application/json");
             response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Authentication required or token expired\"}");

@@ -9,7 +9,7 @@ void main() {
   AppTask(id:'b',projectId:'p',title:'Login UI',priority:'low',statusId:'doing',deadline:now.add(const Duration(days:1))),
   const AppTask(id:'c',projectId:'p',title:'Docs',priority:'medium'),
  ];
- void check(bool ok,String name) { if(!ok) throw StateError(name); print('PASS: $name'); }
+ void check(bool ok,String name) { if(!ok) throw StateError(name); }
  check(filterTasks(tasks,query:'  LOGIN ',now:now).length==2,'trim and case-insensitive title');
  check(filterTasks(tasks,query:'login',statusId:'todo',assigneeId:'u',priority:'high',labelId:'bug',overdueOnly:true,now:now).single.id=='a','combined filters');
  check(filterTasks(tasks,assigneeId:'missing',now:now).isEmpty,'no matching assignee');

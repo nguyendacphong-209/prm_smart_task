@@ -46,8 +46,9 @@ class _TaskActivityPanelState extends ConsumerState<TaskActivityPanel> {
         _last = data['last'] == true;
       });
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Không tải được lịch sử. Vui lòng thử lại.');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -56,9 +57,12 @@ class _TaskActivityPanelState extends ConsumerState<TaskActivityPanel> {
   String _value(dynamic value, String field) {
     if (value == null || value.toString().isEmpty) return 'Chưa có';
     final text = value.toString();
-    if (field == 'status')
+    if (field == 'status') {
       return text.replaceFirst(RegExp(r' \[[^\]]+\]$'), '');
-    if (field == 'deadline') return _date(text);
+    }
+    if (field == 'deadline') {
+      return _date(text);
+    }
     return text;
   }
 
