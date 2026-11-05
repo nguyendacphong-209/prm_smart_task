@@ -35,6 +35,7 @@ out/
 .env
 .env.local
 .env.*.local
+.env.json
 
 ### Flutter Frontend Artifacts ###
 frontend/.dart_tool/
@@ -45,6 +46,7 @@ frontend/.pub/
 frontend/.fvm/
 frontend/build/
 frontend/coverage/
+frontend/ios/
 frontend/.idea/
 frontend/*.iml
 

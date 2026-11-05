@@ -51,7 +51,7 @@ final dioProvider = Provider<Dio>((ref) {
   Future<String?> refreshAccessToken() async {
     if (refreshCompleter != null) {
       logDebug('Refresh already in progress, waiting for shared result');
-      return refreshCompleter!.future;
+      return await refreshCompleter!.future;
     }
 
     refreshCompleter = Completer<String?>();
@@ -165,6 +165,7 @@ final dioProvider = Provider<Dio>((ref) {
         final requestPath = error.requestOptions.path;
         final isAuthEndpoint =
             requestPath.contains(ApiConstants.login) ||
+            requestPath.contains(ApiConstants.googleLogin) ||
             requestPath.contains(ApiConstants.register) ||
             requestPath.contains(ApiConstants.refresh) ||
             requestPath.contains(ApiConstants.logout);

@@ -1,13 +1,15 @@
 import 'package:prm_smart_task/core/storage/auth_storage.dart';
 import 'package:prm_smart_task/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:prm_smart_task/features/auth/data/datasources/google_auth_data_source.dart';
 import 'package:prm_smart_task/features/auth/domain/entities/auth_session.dart';
 import 'package:prm_smart_task/features/auth/domain/entities/auth_user.dart';
 import 'package:prm_smart_task/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  const AuthRepositoryImpl(this._remote);
+  const AuthRepositoryImpl(this._remote, this._googleAuth);
 
   final AuthRemoteDataSource _remote;
+  final GoogleAuthDataSource _googleAuth;
 
   @override
   Future<AuthSession> login({
@@ -15,6 +17,24 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     final sessionModel = await _remote.login(email: email, password: password);
+    await AuthStorage.saveTokens(
+      accessToken: sessionModel.accessToken,
+      refreshToken: sessionModel.refreshToken,
+    );
+    return sessionModel.toEntity();
+  }
+
+  @override
+  Future<AuthSession?> loginWithGoogle() async {
+    final idToken = await _googleAuth.signInAndGetIdToken();
+    if (idToken == null) return null;
+
+    return loginWithGoogleToken(idToken);
+  }
+
+  @override
+  Future<AuthSession> loginWithGoogleToken(String idToken) async {
+    final sessionModel = await _remote.loginWithGoogle(idToken: idToken);
     await AuthStorage.saveTokens(
       accessToken: sessionModel.accessToken,
       refreshToken: sessionModel.refreshToken,
