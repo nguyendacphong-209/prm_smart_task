@@ -46,5 +46,6 @@ frontend/.pub/
 frontend/.fvm/
 frontend/build/
 frontend/coverage/
+frontend/ios/
 frontend/.idea/
 frontend/*.iml
