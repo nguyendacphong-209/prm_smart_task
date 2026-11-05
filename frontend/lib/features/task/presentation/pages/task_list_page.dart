@@ -231,6 +231,17 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         .loadTasks(projectId: widget.projectId, forceReload: true);
   }
 
+  Color _labelColor(String? hex) {
+    var value = (hex ?? '').trim().replaceFirst('#', '');
+    if (value.length == 6) {
+      value = 'FF$value';
+    }
+    final parsed = value.length == 8 ? int.tryParse(value, radix: 16) : null;
+    return parsed == null
+        ? Theme.of(context).colorScheme.secondary
+        : Color(parsed);
+  }
+
   String _formatDate(DateTime? date) {
     if (date == null) return 'Không deadline';
     final local = date.toLocal();
@@ -640,6 +651,43 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                                       task.description!.trim(),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  if (task.labels.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    LayoutBuilder(
+                                      builder: (context, constraints) => Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        children: [
+                                          for (final label in task.labels)
+                                            ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxWidth: constraints.maxWidth,
+                                              ),
+                                              child: Tooltip(
+                                                message: label.name,
+                                                child: Chip(
+                                                  avatar: Icon(
+                                                    Icons.label_rounded,
+                                                    size: 16,
+                                                    color: _labelColor(
+                                                      label.color,
+                                                    ),
+                                                  ),
+                                                  label: Text(
+                                                    label.name,
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                   const SizedBox(height: 10),
