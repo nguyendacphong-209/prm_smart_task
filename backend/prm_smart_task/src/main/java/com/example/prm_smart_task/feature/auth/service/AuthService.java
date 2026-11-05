@@ -1,9 +1,18 @@
 package com.example.prm_smart_task.feature.auth.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.HexFormat;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,37 +20,54 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.prm_smart_task.dto.auth.AuthTokenResponse;
 import com.example.prm_smart_task.dto.common.ApiMessageResponse;
 import com.example.prm_smart_task.dto.auth.ChangePasswordRequest;
+import com.example.prm_smart_task.dto.auth.ForgotPasswordRequest;
 import com.example.prm_smart_task.dto.user.CurrentUserResponse;
 import com.example.prm_smart_task.dto.auth.LoginRequest;
 import com.example.prm_smart_task.dto.auth.LogoutRequest;
 import com.example.prm_smart_task.dto.auth.RefreshTokenRequest;
 import com.example.prm_smart_task.dto.auth.RegisterRequest;
+import com.example.prm_smart_task.dto.auth.ResetPasswordRequest;
 import com.example.prm_smart_task.dto.user.UpdateProfileRequest;
 import com.example.prm_smart_task.feature.user.entity.AppUser;
 import com.example.prm_smart_task.feature.auth.entity.RefreshToken;
+import com.example.prm_smart_task.feature.auth.entity.PasswordResetToken;
 import com.example.prm_smart_task.feature.shared.exception.BadRequestException;
 import com.example.prm_smart_task.feature.shared.exception.UnauthorizedException;
 import com.example.prm_smart_task.feature.user.repository.AppUserRepository;
 import com.example.prm_smart_task.feature.auth.repository.RefreshTokenRepository;
+import com.example.prm_smart_task.feature.auth.repository.PasswordResetTokenRepository;
 import com.example.prm_smart_task.feature.shared.security.JwtService;
 
 @Service
 public class AuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+    private static final String PASSWORD_RESET_MESSAGE =
+            "If an account exists for that email, a password reset code has been sent.";
+    private static final int RESET_CODE_BYTES = 32;
+    private static final long RESET_CODE_EXPIRATION_MINUTES = 30;
+
     private final AppUserRepository appUserRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final PasswordResetEmailService passwordResetEmailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final long refreshTokenExpirationMs;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public AuthService(
             AppUserRepository appUserRepository,
             RefreshTokenRepository refreshTokenRepository,
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            PasswordResetEmailService passwordResetEmailService,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             @Value("${security.jwt.refresh-expiration-ms:604800000}") long refreshTokenExpirationMs) {
         this.appUserRepository = appUserRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.passwordResetEmailService = passwordResetEmailService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;
@@ -187,6 +213,70 @@ public class AuthService {
         refreshTokenRepository.deleteByUserId(user.getId());
 
         return new ApiMessageResponse("Password changed successfully. Please login again.");
+    }
+
+    @Transactional
+    public ApiMessageResponse requestPasswordReset(ForgotPasswordRequest request) {
+        String normalizedEmail = request.email().trim().toLowerCase();
+        AppUser user = appUserRepository.findByEmail(normalizedEmail).orElse(null);
+        if (user == null) {
+            return new ApiMessageResponse(PASSWORD_RESET_MESSAGE);
+        }
+
+        byte[] randomBytes = new byte[RESET_CODE_BYTES];
+        secureRandom.nextBytes(randomBytes);
+        String resetCode = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+
+        passwordResetTokenRepository.deleteByUserId(user.getId());
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setUser(user);
+        resetToken.setTokenHash(hashToken(resetCode));
+        resetToken.setExpiresAt(LocalDateTime.now().plusMinutes(RESET_CODE_EXPIRATION_MINUTES));
+        passwordResetTokenRepository.save(resetToken);
+
+        try {
+            passwordResetEmailService.sendResetCode(user.getEmail(), resetCode);
+        } catch (MailException exception) {
+            logger.warn("Could not send password reset email for user {}", user.getId(), exception);
+        }
+
+        return new ApiMessageResponse(PASSWORD_RESET_MESSAGE);
+    }
+
+    @Transactional
+    public ApiMessageResponse resetPassword(ResetPasswordRequest request) {
+        if (!request.newPassword().equals(request.confirmNewPassword())) {
+            throw new BadRequestException("Confirm new password does not match");
+        }
+
+        String normalizedEmail = request.email().trim().toLowerCase();
+        PasswordResetToken resetToken = passwordResetTokenRepository
+                .findByTokenHashAndExpiresAtAfter(hashToken(request.token()), LocalDateTime.now())
+                .orElseThrow(() -> new BadRequestException("Reset code is invalid or expired"));
+
+        AppUser user = resetToken.getUser();
+        if (!user.getEmail().equals(normalizedEmail)) {
+            throw new BadRequestException("Reset code is invalid or expired");
+        }
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
+            throw new BadRequestException("New password must be different from current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        appUserRepository.save(user);
+        passwordResetTokenRepository.delete(resetToken);
+        refreshTokenRepository.deleteByUserId(user.getId());
+
+        return new ApiMessageResponse("Password reset successfully. Please login again.");
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(token.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
     }
 
     private CurrentUserResponse mapToCurrentUserResponse(AppUser user) {

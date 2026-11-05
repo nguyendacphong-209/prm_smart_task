@@ -109,6 +109,38 @@ class AuthRemoteDataSource {
     }
   }
 
+  Future<void> requestPasswordReset({required String email}) async {
+    try {
+      await _dio.post(
+        ApiConstants.forgotPassword,
+        data: {'email': email},
+      );
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e));
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    try {
+      await _dio.post(
+        ApiConstants.resetPassword,
+        data: {
+          'email': email,
+          'token': token,
+          'newPassword': newPassword,
+          'confirmNewPassword': confirmNewPassword,
+        },
+      );
+    } on DioException catch (e) {
+      throw Exception(_extractErrorMessage(e));
+    }
+  }
+
   String _extractErrorMessage(DioException e) {
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.sendTimeout ||

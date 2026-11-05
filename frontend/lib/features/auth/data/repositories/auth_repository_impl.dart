@@ -85,6 +85,26 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> requestPasswordReset({required String email}) {
+    return _remote.requestPasswordReset(email: email);
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) {
+    return _remote.resetPassword(
+      email: email,
+      token: token,
+      newPassword: newPassword,
+      confirmNewPassword: confirmNewPassword,
+    );
+  }
+
+  @override
   Future<bool> hasSession() async {
     final token = await AuthStorage.getAccessToken();
     return token != null && token.isNotEmpty;

@@ -177,6 +177,55 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> requestPasswordReset({required String email}) async {
+    state = state.copyWith(isLoading: true, clearError: true, clearInfo: true);
+
+    try {
+      await _repository.requestPasswordReset(email: email);
+      state = state.copyWith(
+        isLoading: false,
+        infoMessage:
+            'Nếu email đã đăng ký, mã khôi phục sẽ được gửi đến hộp thư.',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true, clearInfo: true);
+
+    try {
+      await _repository.resetPassword(
+        email: email,
+        token: token,
+        newPassword: newPassword,
+        confirmNewPassword: confirmNewPassword,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        infoMessage: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.',
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceFirst('Exception: ', ''),
+      );
+      return false;
+    }
+  }
+
   void clearMessages() {
     state = state.copyWith(clearError: true, clearInfo: true);
   }

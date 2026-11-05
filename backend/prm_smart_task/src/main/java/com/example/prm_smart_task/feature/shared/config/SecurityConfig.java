@@ -37,7 +37,7 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(unauthorizedEntryPoint()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/api/ai/analyze-task", "/api/payments/payos/webhook").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/api/auth/forgot-password", "/api/auth/reset-password", "/api/ai/analyze-task", "/api/payments/payos/webhook").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/payments/payos/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/payments/payos/webhook").permitAll()
                         .anyRequest().authenticated())

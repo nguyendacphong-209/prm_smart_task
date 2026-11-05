@@ -60,20 +60,36 @@ flutter build apk --release
 flutter build ios --release
 ```
 
-## 🌐 Backend & Database Information
+## Backend và Database
 
-**✅ Backend (Spring Boot) & Database (PostgreSQL) đang được deploy trên Render**
+API mặc định của Flutter đang trỏ tới backend đã deploy trên Render. Khi backend đó đã được admin cấu hình kết nối PostgreSQL đã deploy, bạn chỉ cần chạy Flutter trên máy ảo Android; máy bạn không cần chạy backend hoặc PostgreSQL local. Luồng dữ liệu là:
 
-- **Bạn chỉ cần chạy Flutter Frontend trên local - không cần setup backend/database**
-- Frontend app sẽ tự động kết nối đến API trên Render
-- API endpoint được cấu hình sẵn trong file cấu hình ứng dụng
+```text
+Android Emulator → Backend trên Render → PostgreSQL đã deploy
+```
 
-### ⚠️ Lưu Ý Về Render Deployment
+Admin cấu hình `DB_URL`, `DB_USERNAME` và `DB_PASSWORD` trong môi trường của backend. Flutter chỉ cần địa chỉ API; không đưa thông tin database vào app.
 
-Nếu bạn thấy lỗi kết nối hoặc app bị chậm khi khởi động lần đầu:
-- **Render có thể đang khởi tạo lại server** sau một khoảng thời gian không hoạt động
-- **Hãy đợi khoảng 1-2 phút** rồi thử lại
-- Những lần tiếp theo sẽ nhanh hơn khi server đã "warm up"
+### Chạy với backend đã deploy
+
+Khởi động Android Emulator rồi chạy:
+
+```bash
+flutter pub get
+flutter run
+```
+
+Lệnh này dùng API mặc định trên Render. Nếu server đang ngủ hoặc khởi động lại, chờ một lúc rồi thử lại.
+
+### Chạy backend trên máy bạn
+
+Chỉ dùng cách này khi bạn muốn chạy Spring Boot local. Tạo database trước, rồi cấu hình thông tin PostgreSQL cho backend. Để emulator gọi backend trên máy tính, chạy Flutter với:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080
+```
+
+`10.0.2.2` là địa chỉ Android Emulator dùng để truy cập máy tính đang chạy emulator. Có thể dùng PostgreSQL local hoặc database đã deploy mà backend local được phép truy cập; thông tin database vẫn chỉ cấu hình ở backend.
 
 ## 🎨 Thiết Kế UI
 

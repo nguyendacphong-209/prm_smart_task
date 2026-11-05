@@ -29,5 +29,14 @@ abstract class AuthRepository {
     required String confirmNewPassword,
   });
 
+  Future<void> requestPasswordReset({required String email});
+
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+    required String confirmNewPassword,
+  });
+
   Future<bool> hasSession();
 }

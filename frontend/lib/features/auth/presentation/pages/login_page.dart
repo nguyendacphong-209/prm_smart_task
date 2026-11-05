@@ -139,6 +139,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   label: Text(state.isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'),
               ),
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => context.push('/forgot-password'),
+                child: const Text('Quên mật khẩu?'),
+              ),
+            ),
             const SizedBox(height: 10),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),

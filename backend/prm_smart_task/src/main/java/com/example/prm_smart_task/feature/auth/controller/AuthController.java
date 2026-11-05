@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.prm_smart_task.dto.auth.AuthTokenResponse;
 import com.example.prm_smart_task.dto.common.ApiMessageResponse;
 import com.example.prm_smart_task.dto.auth.ChangePasswordRequest;
+import com.example.prm_smart_task.dto.auth.ForgotPasswordRequest;
 import com.example.prm_smart_task.dto.user.CurrentUserResponse;
 import com.example.prm_smart_task.dto.auth.LoginRequest;
 import com.example.prm_smart_task.dto.auth.LogoutRequest;
 import com.example.prm_smart_task.dto.auth.RefreshTokenRequest;
 import com.example.prm_smart_task.dto.auth.RegisterRequest;
+import com.example.prm_smart_task.dto.auth.ResetPasswordRequest;
 import com.example.prm_smart_task.dto.user.UpdateProfileRequest;
 import com.example.prm_smart_task.feature.auth.service.AuthService;
 
@@ -77,5 +79,17 @@ public class AuthController {
             @Valid @RequestBody ChangePasswordRequest request) {
         ApiMessageResponse response = authService.changePassword(authentication.getName(), request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiMessageResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(authService.requestPasswordReset(request));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiMessageResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(authService.resetPassword(request));
     }
 }

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:prm_smart_task/features/auth/application/providers/auth_providers.dart';
 import 'package:prm_smart_task/features/auth/presentation/pages/change_password_page.dart';
+import 'package:prm_smart_task/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:prm_smart_task/features/auth/presentation/pages/edit_profile_page.dart';
 import 'package:prm_smart_task/features/auth/presentation/pages/login_page.dart';
 import 'package:prm_smart_task/features/auth/presentation/pages/register_page.dart';
@@ -29,6 +30,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordPage(),
       ),
 
       // Home Shell (requires auth)
@@ -128,7 +133,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final path = state.matchedLocation;
 
       // Route classification
-      final isAuthScreen = path == '/login' || path == '/register';
+      final isAuthScreen = path == '/login' ||
+          path == '/register' ||
+          path == '/forgot-password';
       final isHomeScreen = path == '/home';
       final isProfileDependentScreen = path.startsWith('/profile/');
       final isProtectedScreen =
