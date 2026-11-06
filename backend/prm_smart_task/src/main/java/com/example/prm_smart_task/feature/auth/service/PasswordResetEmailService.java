@@ -4,7 +4,11 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +25,9 @@ import com.example.prm_smart_task.feature.shared.exception.PasswordResetEmailExc
 public class PasswordResetEmailService {
 
     private static final Logger logger = LoggerFactory.getLogger(PasswordResetEmailService.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
 
     private final RestClient restClient;
     private final String publicApiKey;
@@ -79,12 +86,39 @@ public class PasswordResetEmailService {
                 throw new PasswordResetEmailException("Mailjet did not accept the email");
             }
         } catch (RestClientResponseException exception) {
-            logger.error("Mailjet rejected password reset email request. status={}", exception.getStatusCode());
+            logger.error("Mailjet rejected password reset email request. status={} providerError={}",
+                    exception.getStatusCode(), safeProviderError(exception));
             throw new PasswordResetEmailException("Mailjet email request failed", exception);
         } catch (RestClientException exception) {
             logger.error("Mailjet request failed. exceptionType={} message={}",
                     exception.getClass().getSimpleName(), exception.getMessage());
             throw new PasswordResetEmailException("Mailjet email request failed", exception);
+        }
+    }
+
+    private String safeProviderError(RestClientResponseException exception) {
+        try {
+            JsonNode response = OBJECT_MAPPER.readTree(exception.getResponseBodyAsString());
+            String errorMessage = response.path("ErrorMessage").asText("");
+            String errorInfo = response.path("ErrorInfo").asText("");
+            String message = String.join("; ",
+                    java.util.stream.Stream.of(errorMessage, errorInfo)
+                            .filter(value -> !value.isBlank())
+                            .toList());
+            if (message.isBlank()) {
+                return "No provider error message";
+            }
+
+            String safeMessage = EMAIL_PATTERN.matcher(message).replaceAll("[email]");
+            if (!publicApiKey.isBlank()) {
+                safeMessage = safeMessage.replace(publicApiKey, "[redacted]");
+            }
+            if (!privateApiKey.isBlank()) {
+                safeMessage = safeMessage.replace(privateApiKey, "[redacted]");
+            }
+            return safeMessage;
+        } catch (JsonProcessingException ignored) {
+            return "Could not parse provider error response";
         }
     }
 
