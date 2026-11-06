@@ -17,9 +17,7 @@ import 'package:prm_smart_task/features/workspace/presentation/pages/workspace_d
 import 'package:prm_smart_task/features/workspace/presentation/pages/pending_approvals_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authControllerProvider);
-
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: '/login',
     routes: [
       // Auth Routes
@@ -129,6 +127,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
+      final authState = ref.read(authControllerProvider);
       final isAuth = authState.isAuthenticated;
       final path = state.matchedLocation;
 
@@ -154,4 +153,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
   );
+
+  ref.listen(authControllerProvider, (_, _) => router.refresh());
+  ref.onDispose(router.dispose);
+
+  return router;
 });

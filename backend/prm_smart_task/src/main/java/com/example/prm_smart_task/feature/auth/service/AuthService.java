@@ -13,7 +13,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +33,7 @@ import com.example.prm_smart_task.feature.user.entity.AppUser;
 import com.example.prm_smart_task.feature.auth.entity.RefreshToken;
 import com.example.prm_smart_task.feature.auth.entity.PasswordResetToken;
 import com.example.prm_smart_task.feature.shared.exception.BadRequestException;
+import com.example.prm_smart_task.feature.shared.exception.PasswordResetEmailException;
 import com.example.prm_smart_task.feature.shared.exception.UnauthorizedException;
 import com.example.prm_smart_task.feature.user.repository.AppUserRepository;
 import com.example.prm_smart_task.feature.auth.repository.RefreshTokenRepository;
@@ -261,8 +261,10 @@ public class AuthService {
 
         try {
             passwordResetEmailService.sendResetCode(user.getEmail(), resetCode);
-        } catch (MailException exception) {
-            logger.warn("Could not send password reset email for user {}", user.getId(), exception);
+        } catch (PasswordResetEmailException exception) {
+            logger.error("Could not send password reset email for user {}: {}",
+                    user.getId(), exception.getMessage());
+            throw exception;
         }
 
         return new ApiMessageResponse(PASSWORD_RESET_MESSAGE);
